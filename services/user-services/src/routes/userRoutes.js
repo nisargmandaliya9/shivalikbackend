@@ -23,10 +23,10 @@ router.post("/add-holiday", UserValidation.addHoliday, UserController.addHoliday
 router.post("/edit-holiday", UserValidation.editHoliday, UserController.editHoliday);
 router.post("/delete-holiday", UserValidation.deleteHoliday, UserController.deleteHoliday);
 
-// router.get("/holidaygroup-list", [], UserController.getHolidayGroupList);
-// router.post("/add-holidaygroup", UserValidation.addHolidayGroup, UserController.addHolidayGroup);
-// router.post("/edit-holidaygroup", UserValidation.editHolidayGroup, UserController.editHolidayGroup);
-// router.post("/delete-holidaygroup", UserValidation.deleteHolidayGroup, UserController.deleteHolidayGroup);
+router.get("/holidaygroup-list", [], UserController.getHolidayGroupList);
+router.post("/add-holidaygroup", UserValidation.addHolidayGroup, UserController.addHolidayGroup);
+router.post("/edit-holidaygroup", UserValidation.editHolidayGroup, UserController.editHolidayGroup);
+router.post("/delete-holidaygroup", UserValidation.deleteHolidayGroup, UserController.deleteHolidayGroup);
 
 router.post("/employee-list", UserValidation.getEmployeeList, UserController.getEmployeeList);
 router.post("/add-employee", UserValidation.addEmployee, UserController.addEmployee);

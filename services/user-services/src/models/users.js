@@ -71,12 +71,6 @@ UsersSchema.methods.toJSON = function () {
     return obj;
 };
 
-// UsersSchema.virtual('userRoles', {
-//     ref: 'userroles', // The model to use
-//     localField: '_id', // Field in User schema
-//     foreignField: 'userId', // Field in Post schema
-// });
-
 const UsersModel = DBConnect.model('users', UsersSchema)
 
 UsersModel.syncIndexes().then(() => {

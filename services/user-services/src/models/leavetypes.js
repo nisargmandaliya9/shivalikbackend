@@ -17,6 +17,10 @@ const leaveTypeSchema = new Schema({
         type: Boolean,
         default: false
     },
+    applyBeforeDays: {
+        type: Number,
+        default: 0
+    },
     isActive: {
         type: Boolean,
         default: true
