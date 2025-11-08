@@ -5,7 +5,7 @@ const messages = require("../message");
 const response = require("../config/response.js");
 // const UsersModel = require('../models/users.js');
 // const UserRolesModel = require("../models/userRoles.js");
-const CommonConfig = require('../config/common.js');
+// const CommonConfig = require('../config/common.js');
 // const TokenBlackListsModel = require('../models/tokenBlackLists.js');
 
 exports.adminVerifyToken =  async (req, res, next) => {

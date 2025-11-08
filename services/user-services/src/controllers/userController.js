@@ -21,6 +21,7 @@ const HolidaysModel = require('../models/holidays.js');
 const HolidayGroupsModel = require("../models/holidaygroups.js");
 const LeaveGroupsModel = require('../models/leavegroups.js');
 const LeaveAssignmentsModel = require('../models/leaveassignments.js');
+const EmployeeLeaveBalancesModel = require('../models/employeeleavebalances.js');
 // const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
 // const { territoryCache } = require("../utils/territoryCache.js");
 // const mongoose = require('mongoose');
@@ -624,7 +625,7 @@ const addEmployee = async (req, res) => {
     const { name, email, phone, role, branch_id, department_id, dob } = req.body;
 
     try {
-
+        // Create new user
         const newUser = new UsersModel({
             name,
             email,
@@ -638,6 +639,44 @@ const addEmployee = async (req, res) => {
 
         const user = await newUser.save();
 
+        // Get leave assignment for employee's branch and department
+        const currentYear = new Date().getFullYear();
+        const leaveAssignment = await LeaveAssignmentsModel.findOne({
+            branch_id,
+            department_id,
+            year: currentYear,
+            isDeleted: false
+        });
+
+        if (leaveAssignment) {
+            // Get leave group details
+            const leaveGroup = await LeaveGroupsModel.findOne({
+                _id: leaveAssignment.leave_group_id,
+                isDeleted: false
+            });
+
+            if (leaveGroup && leaveGroup.leave_types && leaveGroup.leave_types.length > 0) {
+                // Create leave balance records for each leave type
+                const leaveBalancePromises = leaveGroup.leave_types.map(leaveType => {
+                    return new EmployeeLeaveBalancesModel({
+                        employee_id: user._id,
+                        leave_type_id: leaveType.leave_type_id,
+                        total_leaves: leaveType.paid_leaves,
+                        year: currentYear
+                    }).save();
+                });
+
+                await Promise.all(leaveBalancePromises);
+            }
+        }
+
+        // Populate leave balances for response
+        const leaveBalances = await EmployeeLeaveBalancesModel.find({
+            employee_id: user._id,
+            year: currentYear,
+            isDeleted: false
+        }).populate('leave_type_id', 'name');
+
         res.status(201).json({
             message: 'User created successfully',
             user: {
@@ -645,12 +684,13 @@ const addEmployee = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role
-            }
+            },
+            leave_balances: leaveBalances
         });
 
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server Error');
+        console.error('Error creating employee:', error);
+        res.status(500).json({ message: 'Error creating employee', error: error.message });
     }
 }
 
