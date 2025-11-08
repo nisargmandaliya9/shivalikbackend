@@ -49,10 +49,10 @@ exports.isCommonUserAuthenticated = async (req, res, next) => {
         return res.status(401).send(response.toJson(messages['en'].auth.empty_token));
     }
 
-    const blockList = await TokenBlackListsModel.findOne({ token: token });
-    if (blockList) {
-        return res.status(401).send(response.toJson(messages['en'].auth.un_authenticate));
-    }
+    // const blockList = await TokenBlackListsModel.findOne({ token: token });
+    // if (blockList) {
+    //     return res.status(401).send(response.toJson(messages['en'].auth.un_authenticate));
+    // }
 
     next();
 

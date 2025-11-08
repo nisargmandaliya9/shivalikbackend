@@ -10,4 +10,9 @@ const { isCommonUserAuthenticated, adminVerifyToken, superAdminVerifyToken } = r
 router.post("/login", UserValidation.loginApi, UserController.loginApi);
 router.post("/verify-otp", UserValidation.verifyOTP, UserController.verifyOtpAndLogin);
 
+router.get("/leavetype-list", [], UserController.getLeaveTypeList);
+router.post("/add-leavetype", UserValidation.addLeaveType, UserController.addLeaveType);
+router.post("/edit-leavetype", UserValidation.editLeaveType, UserController.editLeaveType);
+router.post("/delete-leavetype", UserValidation.deleteLeaveType, UserController.deleteLeaveType);
+
 module.exports = router;

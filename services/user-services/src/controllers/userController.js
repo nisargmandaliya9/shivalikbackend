@@ -6,20 +6,21 @@ var jwt = require("jsonwebtoken");
 
 // const uuid = require('uuidv4');
 const { validationResult } = require('express-validator');
-const sendOtp = require('../libs/sendOtp.js');
-const SendMail = require('../libs/sendMail.js');
+// const sendOtp = require('../libs/sendOtp.js');
+// const SendMail = require('../libs/sendMail.js');
 const CommonConfig = require('../config/common.js');
-const CommonFun = require('../libs/common.js');
-const axios = require('axios');
-const retry = require('async-retry');
-const CommonController = require('./commonController.js')
+// const CommonFun = require('../libs/common.js');
+// const axios = require('axios');
+// const retry = require('async-retry');
+// const CommonController = require('./commonController.js')
 const UsersModel = require('../models/users.js');
-const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
-const { territoryCache } = require("../utils/territoryCache.js");
+const LeaveTypeModel = require('../models/leavetype.js');
+// const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
+// const { territoryCache } = require("../utils/territoryCache.js");
 const mongoose = require('mongoose');
-const ObjectId = mongoose.Types.ObjectId;
-const moment = require('moment'); // For date ranges
-const common = require("../config/common.js");
+// const ObjectId = mongoose.Types.ObjectId;
+// const moment = require('moment'); // For date ranges
+// const common = require("../config/common.js");
 
 // const testUserApi = async (req, res) => {
 //     const errors = validationResult(req);
@@ -137,8 +138,109 @@ const verifyOtpAndLogin = async (req, res) => {
     }
 }
 
+const getLeaveTypeList = async (req, res) => {
+    try {
+        const leaveTypes = await LeaveTypeModel.find({isDeleted: false}).sort({ createdAt: -1 });
+        return res.status(200).send(response.toJson(leaveTypes));
+    } catch (err) {
+        console.error('Error fetching leave types:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const addLeaveType = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+    const { name, applyOnHoliday, applyOnPastDays, isActive } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ message: "Leave type name is required." });
+    }
+
+    try {
+        // Check if leave type already exists
+        const existingType = await LeaveTypeModel.findOne({ name });
+        if (existingType) {
+            return res.status(400).json({ message: "A leave type with this name already exists." });
+        }
+
+        const newLeaveType = new LeaveTypeModel({
+            name,
+            applyOnHoliday,
+            applyOnPastDays,
+            isActive: isActive === undefined ? true : isActive
+        });
+
+        const savedLeaveType = await newLeaveType.save();
+        res.status(201).json(savedLeaveType);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error adding leave type", error: error.message });
+    }
+}
+
+const editLeaveType = async (req, res) => {
+    const { name, applyOnHoliday, applyOnPastDays, isActive, id } = req.body;
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (applyOnHoliday !== undefined) updateData.applyOnHoliday = applyOnHoliday;
+    if (applyOnPastDays !== undefined) updateData.applyOnPastDays = applyOnPastDays;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    if (Object.keys(updateData).length === 0) {
+        return res.status(200).json({ message: "No updates provided, success response." });
+    }
+
+    try {
+        const updatedLeaveType = await LeaveTypeModel.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedLeaveType) {
+            return res.status(404).json({ message: "Leave type not found." });
+        }
+
+        res.status(200).json(updatedLeaveType);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error updating leave type", error: error.message });
+    }
+}
+
+const deleteLeaveType = async (req, res) => {
+    const { id } = req.body;
+
+    try {
+        const deletedLeaveType = await LeaveTypeModel.findByIdAndUpdate(
+            id,
+            { isDeleted: true},
+            { new: true }
+        );
+
+        if (!deletedLeaveType) {
+            return res.status(404).json({ message: "Leave type not found." });
+        }
+
+        res.status(200).json({ message: "Leave type deleted successfully." });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting leave type", error: error.message });
+    }
+}   
+
 module.exports = {
     loginApi,
     verifyOtpAndLogin,
+    getLeaveTypeList,
+    addLeaveType,
+    editLeaveType,
+    deleteLeaveType,
     // testUserApi
 }
