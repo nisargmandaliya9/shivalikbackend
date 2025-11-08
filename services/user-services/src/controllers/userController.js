@@ -58,7 +58,8 @@ const loginApi = async (req, res) => {
             isDeleted: false, 
             isActive: true 
         });
-
+        console.log('user;;;;', user);
+        
         if (!user) {
             return res.status(401).send(response.toJson("Invalid credentials."));
         }
@@ -77,7 +78,7 @@ const loginApi = async (req, res) => {
         }));
 
     } catch (err) {
-        console.log(err);
+        console.error('catch error:::', err);
         const statusCode = err.statusCode || 500;
         const errMess = err.message || "An internal server error occurred.";
         return res.status(statusCode).send(response.toJson(errMess));
