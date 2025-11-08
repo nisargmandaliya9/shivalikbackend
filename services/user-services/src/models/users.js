@@ -29,10 +29,6 @@ const UsersSchema = new Schema({
         type: String,
         required: true
     },
-    password: {
-        type: String,
-        required: true
-    },
     otpcode: {
         type: String,
         required: false
