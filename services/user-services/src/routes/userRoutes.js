@@ -4,9 +4,6 @@ const UserValidation = require("../validations/userValidation");
 const router = require('express').Router();
 const { isCommonUserAuthenticated, adminVerifyToken, superAdminVerifyToken } = require("../middleware/authJwt");
 
-// Add just final test deploy
-// router.post("/test-user-api", UserValidation.testUserApi, TestUserController.testUserApi);
-
 router.post("/login", UserValidation.loginApi, UserController.loginApi);
 router.post("/verify-otp", UserValidation.verifyOTP, UserController.verifyOtpAndLogin);
 
@@ -43,5 +40,7 @@ router.post("/edit-employee", UserValidation.editEmployee, UserController.editEm
 router.post("/delete-employee", UserValidation.deleteEmployee, UserController.deleteEmployee);
 
 router.post("/employee-leave-balance", UserValidation.getEmployeeLeaveBalance, UserController.getEmployeeLeaveBalance);
+
+router.post("/request-leave", UserValidation.requestLeave, UserController.requestLeave);
 
 module.exports = router;

@@ -160,6 +160,25 @@ exports.deleteEmployee = [
     check('id').not().isEmpty().withMessage('ID is required').isMongoId().withMessage('Must be a valid user ID'),
 ];
 
+exports.requestLeave = [
+    check('id')
+        .not().isEmpty().withMessage('ID is required')
+        .isMongoId().withMessage('Must be a valid leave type ID'),
+    check('leave_type_id')
+        .not().isEmpty().withMessage('Leave type is required')
+        .isMongoId().withMessage('Must be a valid leave type ID'),
+    check('leave_taken')
+        .not().isEmpty().withMessage('Leave taken is required')
+        .isIn([0.5, 1]).withMessage('Leave taken must be either 0.5 or 1'),
+    check('leave_date')
+        .not().isEmpty().withMessage('Leave date is required')
+        .isISO8601().withMessage('Must be a valid date'),
+    check('reason')
+        .not().isEmpty().withMessage('Reason is required')
+        .isString().withMessage('Reason must be a string')
+        .isLength({ min: 3, max: 500 }).withMessage('Reason must be between 3 and 500 characters'),
+];
+
 exports.getEmployeeLeaveBalance = [
     check('branch_id')
         .not().isEmpty().withMessage('Branch ID is required')

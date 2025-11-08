@@ -42,6 +42,10 @@ const UsersSchema = new Schema({
         type: String,
         required: false
     },
+    device_token: {
+        type: String,
+        required: false
+    },
     loginstatus: { type: String, enum: ['Logout', 'Login'], default: 'Logout' },
     logindate: Date,
     createdAt: {

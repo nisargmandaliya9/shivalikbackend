@@ -15,4 +15,7 @@ services/user-services/.DS_Store
 services/user-services/src/migrate-mongo-config.js
 services/user-services/src/logs
 
+services/user-services/src/serviceAccount/r-os-848e8-firebase-adminsdk-fbsvc-71636aec4b.json
+**/serviceAccount/*.json
+
 helper/third-party-cred/*

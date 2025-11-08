@@ -22,6 +22,8 @@ const HolidayGroupsModel = require("../models/holidaygroups.js");
 const LeaveGroupsModel = require('../models/leavegroups.js');
 const LeaveAssignmentsModel = require('../models/leaveassignments.js');
 const EmployeeLeaveBalancesModel = require('../models/employeeleavebalances.js');
+const LeaveRequestsModel = require('../models/leaverequests.js');
+const { sendPushNotification } = require('../libs/firebaseNotification.js');
 // const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
 // const { territoryCache } = require("../utils/territoryCache.js");
 // const mongoose = require('mongoose');
@@ -129,6 +131,7 @@ const verifyOtpAndLogin = async (req, res) => {
         const token = jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
 
         user.token = token;
+        user.device_token = req.body.device_token || "";
         user.loginstatus = 'Login';
         user.logindate = Date.now();
         user.updatedAt = Date.now();
@@ -915,6 +918,88 @@ const deleteLeaveAssignment = async (req, res) => {
     }
 }
 
+const requestLeave = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const { leave_type_id, leave_taken, leave_date, reason } = req.body;
+        const employee_id = req.id; // Get employee ID from JWT token
+
+        // Get employee details including manager
+        const employee = await UsersModel.findById(employee_id).populate('manager_id');
+        console.log('employee inside leave request:::--', employee);
+
+        if (!employee) {
+            return res.status(404).send(response.toJson("Employee not found"));
+        }
+
+        // Check if employee has sufficient leave balance
+        const currentYear = new Date().getFullYear();
+        console.log('currentYear:::--', currentYear);
+        
+        const leaveBalance = await EmployeeLeaveBalancesModel.findOne({
+            employee_id,
+            leave_type_id,
+            year: currentYear,
+            isDeleted: false
+        });
+
+        if (!leaveBalance || leaveBalance.remaining_leaves < leave_taken) {
+            return res.status(400).send(response.toJson("Insufficient leave balance"));
+        }
+
+        // Create leave request
+        const leaveRequest = new LeaveRequestsModel({
+            employee_id,
+            leave_type_id,
+            manager_id: employee.manager_id._id,
+            leave_taken,
+            leave_date: new Date(leave_date),
+            reason,
+            status: 'Pending'
+        });
+
+        await leaveRequest.save();
+
+        // Send push notification to manager if they have a device token
+        if (employee.manager_id.device_token) {
+            const notificationTitle = 'New Leave Request';
+            const notificationBody = `${employee.name} has requested ${leave_taken} day(s) leave for ${new Date(leave_date).toLocaleDateString()}`;
+            
+            try {
+                await sendPushNotification(
+                    employee.manager_id.device_token,
+                    notificationTitle,
+                    notificationBody,
+                    {
+                        type: 'LEAVE_REQUEST',
+                        request_id: leaveRequest._id.toString()
+                    }
+                );
+            } catch (notificationError) {
+                console.error('Failed to send push notification:', notificationError);
+                // Don't throw error, continue with response
+            }
+        }
+
+        // Return response with populated data
+        const populatedRequest = await LeaveRequestsModel.findById(leaveRequest._id)
+            .populate('employee_id', 'name email')
+            .populate('leave_type_id', 'name')
+            .populate('manager_id', 'name email');
+
+        return res.status(201).send(response.toJson(populatedRequest));
+
+    } catch (err) {
+        console.error('Error requesting leave:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
 
 module.exports = {
     loginApi,
@@ -945,5 +1030,6 @@ module.exports = {
     addLeaveAssignment,
     deleteLeaveAssignment,
     getEmployeeLeaveBalance,
+    requestLeave,
     // testUserApi
 }
