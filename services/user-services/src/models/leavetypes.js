@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
+const { DBConnect } = require('./index.js');
 
 const leaveTypeSchema = new Schema({
     name: {
@@ -26,6 +27,6 @@ const leaveTypeSchema = new Schema({
     }
 }, { timestamps: true });
 
-const LeaveType = mongoose.model('leavetypes', leaveTypeSchema);
+const LeaveTypeModel = DBConnect.model('leavetypes', leaveTypeSchema);
 
-module.exports = LeaveType;
+module.exports = LeaveTypeModel;
