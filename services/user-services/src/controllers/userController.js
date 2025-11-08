@@ -59,10 +59,13 @@ const loginApi = async (req, res) => {
             isDeleted: false, 
             isActive: true 
         });
-        console.log('user;;;;', user);
         
         if (!user) {
             return res.status(401).send(response.toJson("Invalid credentials."));
+        }
+
+        if (user.role === "Admin" || user.role === "Superadmin") {
+            return res.status(403).send(response.toJson("Admins are not allowed to log in from this portal."));
         }
 
         // 1. Generate a 4-digit OTP
@@ -237,7 +240,13 @@ const deleteLeaveType = async (req, res) => {
 
 const getEmployeeList = async (req, res) => {
     try {
-        const employees = await UsersModel.find({isDeleted: false, role: "Employee"}).sort({ createdAt: -1 });
+        const currentUserId = req?._id;
+
+        const employees = await UsersModel.find({
+            isDeleted: false,
+            role: { $ne: "Admin" }, // role not equal to Admin
+            _id: { $ne: currentUserId } // exclude current user
+        }).sort({ createdAt: -1 });
         return res.status(200).send(response.toJson(employees));
     } catch (err) {
         console.error('Error fetching employees:', err);

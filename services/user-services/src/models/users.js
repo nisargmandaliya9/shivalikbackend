@@ -6,6 +6,7 @@ const { DBConnect } = require('./index.js')
 const UsersSchema = new Schema({
     branch_id: { type: Schema.Types.ObjectId, ref: 'branchs', required: true },
     department_id: { type: Schema.Types.ObjectId, ref: 'departments', required: true },
+    manager_id: { type: Schema.Types.ObjectId, ref: 'users', required: true },
     role: { type: String, enum: ['Employee', 'Manager', 'HR', 'Admin'], required: true },
     name: {
         type: String,

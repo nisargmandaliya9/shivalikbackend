@@ -29,6 +29,10 @@ exports.deleteLeaveType = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
 
+exports.getEmployeeList = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
 exports.addEmployee = [
     check('name')
         .not().isEmpty().withMessage('Name is required'),
