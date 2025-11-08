@@ -244,9 +244,22 @@ const getEmployeeList = async (req, res) => {
 
         const employees = await UsersModel.find({
             isDeleted: false,
-            role: { $ne: "Admin" }, // role not equal to Admin
-            _id: { $ne: currentUserId } // exclude current user
-        }).sort({ createdAt: -1 });
+            role: { $ne: "Admin" },
+            _id: { $ne: currentUserId }
+        })
+        .populate({
+            path: "department_id",
+            select: "name"
+        })
+        .populate({
+            path: "branch_id",
+            select: "name"
+        })
+        .populate({
+            path: "manager_id",
+            select: "name phone role"
+        })
+        .sort({ createdAt: -1 });
         return res.status(200).send(response.toJson(employees));
     } catch (err) {
         console.error('Error fetching employees:', err);
