@@ -19,6 +19,7 @@ const DepartmentsModel = require('../models/departments.js');
 const BranchModel = require('../models/branchs.js');
 const HolidaysModel = require('../models/holidays.js');
 const HolidayGroupsModel = require("../models/holidaygroups.js");
+const LeaveGroupsModel = require('../models/leavegroups.js');
 // const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
 // const { territoryCache } = require("../utils/territoryCache.js");
 // const mongoose = require('mongoose');
@@ -437,6 +438,127 @@ const deleteHolidayGroup = async (req, res) => {
     }
 }
 
+// Leave Groups CRUD Operations
+const getLeaveGroupList = async (req, res) => {
+    try {
+        const leaveGroups = await LeaveGroupsModel.find({ isDeleted: false })
+        .populate({
+            path: 'leave_types.leave_type_id',
+            select: 'name'
+        })
+        .sort({ createdAt: -1 });
+        return res.status(200).send(response.toJson(leaveGroups));
+    } catch (err) {
+        console.error('Error fetching leave groups:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const addLeaveGroup = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    const { name, leave_types, allocation_type, year_end_policy } = req.body;
+
+    try {
+        const existing = await LeaveGroupsModel.findOne({ name, isDeleted: false });
+        if (existing) {
+            return res.status(400).json({ message: "Leave group with this name already exists." });
+        }
+
+        const newLeaveGroup = new LeaveGroupsModel({
+            name,
+            leave_types,
+            allocation_type,
+            year_end_policy
+        });
+
+        const savedLeaveGroup = await newLeaveGroup.save();
+        
+        // Populate the leave type names before sending response
+        const populatedLeaveGroup = await LeaveGroupsModel.findById(savedLeaveGroup._id)
+            .populate({
+                path: 'leave_types.leave_type_id',
+                select: 'name'
+            });
+
+        res.status(201).json(populatedLeaveGroup);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error adding leave group", error: error.message });
+    }
+}
+
+const editLeaveGroup = async (req, res) => {
+    const { id, name, leave_types, allocation_type, year_end_policy } = req.body;
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (leave_types !== undefined) updateData.leave_types = leave_types;
+    if (allocation_type !== undefined) updateData.allocation_type = allocation_type;
+    if (year_end_policy !== undefined) updateData.year_end_policy = year_end_policy;
+
+    if (Object.keys(updateData).length === 0) {
+        return res.status(200).json({ message: "No updates provided, success response." });
+    }
+
+    try {
+        if (name) {
+            const existing = await LeaveGroupsModel.findOne({ 
+                name, 
+                _id: { $ne: id },
+                isDeleted: false 
+            });
+            if (existing) {
+                return res.status(400).json({ message: "Leave group with this name already exists." });
+            }
+        }
+
+        const updatedLeaveGroup = await LeaveGroupsModel.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        ).populate({
+            path: 'leave_types.leave_type_id',
+            select: 'name'
+        });
+
+        if (!updatedLeaveGroup) {
+            return res.status(404).json({ message: "Leave group not found." });
+        }
+
+        res.status(200).json(updatedLeaveGroup);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error updating leave group", error: error.message });
+    }
+}
+
+const deleteLeaveGroup = async (req, res) => {
+    const { id } = req.body;
+
+    try {
+        const deletedLeaveGroup = await LeaveGroupsModel.findByIdAndUpdate(
+            id,
+            { isDeleted: true },
+            { new: true }
+        );
+
+        if (!deletedLeaveGroup) {
+            return res.status(404).json({ message: "Leave group not found." });
+        }
+
+        res.status(200).json({ message: "Leave group deleted successfully." });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting leave group", error: error.message });
+    }
+}
+
 
 const getDepartmentList = async (req, res) => {
     try {
@@ -619,5 +741,9 @@ module.exports = {
     addHolidayGroup,
     editHolidayGroup,
     deleteHolidayGroup,
+    getLeaveGroupList,
+    addLeaveGroup,
+    editLeaveGroup,
+    deleteLeaveGroup,
     // testUserApi
 }

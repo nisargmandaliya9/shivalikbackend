@@ -28,6 +28,12 @@ router.post("/add-holidaygroup", UserValidation.addHolidayGroup, UserController.
 router.post("/edit-holidaygroup", UserValidation.editHolidayGroup, UserController.editHolidayGroup);
 router.post("/delete-holidaygroup", UserValidation.deleteHolidayGroup, UserController.deleteHolidayGroup);
 
+// Leave Groups routes
+router.get("/leavegroup-list", [], UserController.getLeaveGroupList);
+router.post("/add-leavegroup", UserValidation.addLeaveGroup, UserController.addLeaveGroup);
+router.post("/edit-leavegroup", UserValidation.editLeaveGroup, UserController.editLeaveGroup);
+router.post("/delete-leavegroup", UserValidation.deleteLeaveGroup, UserController.deleteLeaveGroup);
+
 router.post("/employee-list", UserValidation.getEmployeeList, UserController.getEmployeeList);
 router.post("/add-employee", UserValidation.addEmployee, UserController.addEmployee);
 router.post("/edit-employee", UserValidation.editEmployee, UserController.editEmployee);

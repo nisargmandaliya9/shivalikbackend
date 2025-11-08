@@ -56,6 +56,33 @@ exports.deleteHolidayGroup = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
 
+exports.addLeaveGroup = [
+    check('name').not().isEmpty().withMessage('Name is required'),
+    check('leave_types').isArray().withMessage('Leave types must be an array')
+        .notEmpty().withMessage('At least one leave type is required'),
+    check('leave_types.*.leave_type_id').not().isEmpty().withMessage('Leave type ID is required')
+        .isMongoId().withMessage('Must be a valid leave type ID'),
+    check('leave_types.*.paid_leaves').isInt({ min: 0 }).withMessage('Paid leaves must be a non-negative number'),
+    check('allocation_type').isIn(['Yearly', 'Monthly']).withMessage('Invalid allocation type'),
+    check('year_end_policy').isIn(['PayoutManual', 'PayoutAuto', 'CarryForwardManual', 'CarryForwardAuto', 'Reset'])
+        .withMessage('Invalid year end policy')
+];
+
+exports.editLeaveGroup = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+    check('name').optional(),
+    check('leave_types').optional().isArray().withMessage('Leave types must be an array'),
+    check('leave_types.*.leave_type_id').optional().isMongoId().withMessage('Must be a valid leave type ID'),
+    check('leave_types.*.paid_leaves').optional().isInt({ min: 0 }).withMessage('Paid leaves must be a non-negative number'),
+    check('allocation_type').optional().isIn(['Yearly', 'Monthly']).withMessage('Invalid allocation type'),
+    check('year_end_policy').optional().isIn(['PayoutManual', 'PayoutAuto', 'CarryForwardManual', 'CarryForwardAuto', 'Reset'])
+        .withMessage('Invalid year end policy')
+];
+
+exports.deleteLeaveGroup = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
 exports.getDepartmentList = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
