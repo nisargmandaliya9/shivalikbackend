@@ -65,6 +65,10 @@ exports.addEmployee = [
     check('department_id')
         .not().isEmpty().withMessage('Department ID is required')
         .isMongoId().withMessage('Must be a valid department ID'),
+
+    check('manager_id')
+        .not().isEmpty().withMessage('Manager ID is required')
+        .isMongoId().withMessage('Must be a valid Manager ID'),
 ];
 
 exports.editEmployee = [
