@@ -240,7 +240,7 @@ const deleteLeaveType = async (req, res) => {
 
 const getEmployeeList = async (req, res) => {
     try {
-        const currentUserId = req?._id;
+        const currentUserId = req.id;
 
         const employees = await UsersModel.find({
             isDeleted: false,
