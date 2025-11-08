@@ -641,6 +641,8 @@ const addEmployee = async (req, res) => {
 
         // Get leave assignment for employee's branch and department
         const currentYear = new Date().getFullYear();
+        console.log('current year---', currentYear);
+        
         const leaveAssignment = await LeaveAssignmentsModel.findOne({
             branch_id,
             department_id,
@@ -758,6 +760,69 @@ const deleteEmployee = async (req, res) => {
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
+    }
+}
+
+const getEmployeeLeaveBalance = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const { branch_id, department_id, year,
+            // employee_id, 
+            // leave_type_id 
+        } = req.body;
+
+        // Build query conditions
+        const query = { isDeleted: false };
+
+        // if (employee_id) {
+        //     query.employee_id = employee_id;
+        // }
+
+        // if (leave_type_id) {
+        //     query.leave_type_id = leave_type_id;
+        // }
+
+        if (year) {
+            query.year = parseInt(year);
+        }
+
+        // First find matching users if branch or department filters are provided
+        if (branch_id || department_id) {
+            const userQuery = { isDeleted: false };
+            if (branch_id) userQuery.branch_id = branch_id;
+            if (department_id) userQuery.department_id = department_id;
+
+            const matchingUsers = await UsersModel.find(userQuery).select('_id');
+            const userIds = matchingUsers.map(user => user._id);
+
+            // Add matching user IDs to the main query
+            // if (employee_id) {
+            //     // If employee_id was specified, it must be in the matching users
+            //     if (!userIds.some(id => id.equals(employee_id))) {
+            //         return res.status(200).send(response.toJson([]));
+            //     }
+            // } else {
+                query.employee_id = { $in: userIds };
+            // }
+        }
+
+        // Fetch leave balances with populated references
+        const leaveBalances = await EmployeeLeaveBalancesModel.find(query)
+            .populate('employee_id', 'name phone')
+            .populate('leave_type_id', 'name')
+            .sort({ 'employee_id.name': 1, 'leave_type_id.name': 1 });
+
+        return res.status(200).send(response.toJson(leaveBalances));
+
+    } catch (err) {
+        console.error('Error fetching employee leave balances:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
     }
 }
 
@@ -879,5 +944,6 @@ module.exports = {
     getLeaveAssignmentList,
     addLeaveAssignment,
     deleteLeaveAssignment,
+    getEmployeeLeaveBalance,
     // testUserApi
 }

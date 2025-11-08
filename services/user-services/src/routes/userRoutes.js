@@ -42,4 +42,6 @@ router.post("/add-employee", UserValidation.addEmployee, UserController.addEmplo
 router.post("/edit-employee", UserValidation.editEmployee, UserController.editEmployee);
 router.post("/delete-employee", UserValidation.deleteEmployee, UserController.deleteEmployee);
 
+router.post("/employee-leave-balance", UserValidation.getEmployeeLeaveBalance, UserController.getEmployeeLeaveBalance);
+
 module.exports = router;

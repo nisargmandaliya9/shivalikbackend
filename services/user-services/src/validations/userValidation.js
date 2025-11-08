@@ -159,3 +159,17 @@ exports.editEmployee = [
 exports.deleteEmployee = [
     check('id').not().isEmpty().withMessage('ID is required').isMongoId().withMessage('Must be a valid user ID'),
 ];
+
+exports.getEmployeeLeaveBalance = [
+    check('branch_id')
+        .not().isEmpty().withMessage('Branch ID is required')
+        .isMongoId().withMessage('Must be a valid branch ID'),
+    check('department_id')
+        .not().isEmpty().withMessage('Department ID is required')
+        .isMongoId().withMessage('Must be a valid department ID'),
+    check('year')
+        .not().isEmpty().withMessage('Year is required')
+        .isInt().withMessage('Year must be a valid number'),
+    // check('employee_id').optional().isMongoId().withMessage('Must be a valid employee ID'),
+    // check('leave_type_id').optional().isMongoId().withMessage('Must be a valid leave type ID'),
+];
