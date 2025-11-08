@@ -1,4 +1,4 @@
-const messages = require("../message/index.js");
+// const messages = require("../message/index.js");
 const response = require("../config/response.js");
 // const config = require("../config/auth.js");
 var jwt = require("jsonwebtoken");
@@ -17,9 +17,11 @@ const UsersModel = require('../models/users.js');
 const LeaveTypeModel = require('../models/leavetypes.js');
 const DepartmentsModel = require('../models/departments.js');
 const BranchModel = require('../models/branchs.js');
+const HolidaysModel = require('../models/holidays.js');
+const HolidayGroupsModel = require("../models/holidaygroups.js");
 // const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
 // const { territoryCache } = require("../utils/territoryCache.js");
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 // const ObjectId = mongoose.Types.ObjectId;
 // const moment = require('moment'); // For date ranges
 // const common = require("../config/common.js");
@@ -61,12 +63,13 @@ const loginApi = async (req, res) => {
             isDeleted: false, 
             isActive: true 
         });
+        console.log('user:::', user);
         
         if (!user) {
             return res.status(401).send(response.toJson("Invalid credentials."));
         }
 
-        if (user.role === "Admin" || user.role === "Superadmin") {
+        if (user.role === "Admin") {
             return res.status(403).send(response.toJson("Admins are not allowed to log in from this portal."));
         }
 
@@ -237,6 +240,198 @@ const deleteLeaveType = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: "Error deleting leave type", error: error.message });
+    }
+}
+
+// Holidays CRUD
+const getHolidayList = async (req, res) => {
+    try {
+        const holidays = await HolidaysModel.find({ isDeleted: false }).sort({ createdAt: -1 });
+        return res.status(200).send(response.toJson(holidays));
+    } catch (err) {
+        console.error('Error fetching holidays:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const addHolidayGroup = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    const { name, description, date, isActive } = req.body;
+
+    if (!name || !date) {
+        return res.status(400).json({ message: "Name and date are required." });
+    }
+
+    try {
+        const existing = await HolidaysModel.findOne({ name: name, date: date, isDeleted: false });
+        if (existing) {
+            return res.status(400).json({ message: "Holiday already exists for this date." });
+        }
+
+        const newHoliday = new HolidaysModel({
+            name,
+            description,
+            date
+        });
+
+        const savedHoliday = await newHoliday.save();
+        res.status(201).json(savedHoliday);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error adding holiday", error: error.message });
+    }
+}
+
+const editHolidayGroup = async (req, res) => {
+    const { id, name, holiday_id } = req.body;
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (holiday_id !== undefined) updateData.holiday_id = holiday_id;
+    if (date !== undefined) updateData.date = date;
+
+    if (Object.keys(updateData).length === 0) {
+        return res.status(200).json({ message: "No updates provided, success response." });
+    }
+
+    try {
+        const updatedHoliday = await HolidaysModel.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedHoliday) {
+            return res.status(404).json({ message: "Holiday not found." });
+        }
+
+        res.status(200).json(updatedHoliday);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error updating holiday", error: error.message });
+    }
+}
+
+const deleteHolidayGroup = async (req, res) => {
+    const { id } = req.body;
+
+    try {
+        const deletedHoliday = await HolidaysModel.findByIdAndUpdate(
+            id,
+            { isDeleted: true },
+            { new: true }
+        );
+
+        if (!deletedHoliday) {
+            return res.status(404).json({ message: "Holiday not found." });
+        }
+
+        res.status(200).json({ message: "Holiday deleted successfully." });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting holiday", error: error.message });
+    }
+}
+
+
+const getHolidayGroupList = async (req, res) => {
+    try {
+        const holidayGroups = await HolidayGroupsModel.find({ isDeleted: false }).sort({ createdAt: -1 });
+        return res.status(200).send(response.toJson(holidayGroups));
+    } catch (err) {
+        console.error('Error fetching holidays:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const addHoliday = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    const { name, description, date, isActive } = req.body;
+
+    if (!name || !date) {
+        return res.status(400).json({ message: "Name and date are required." });
+    }
+
+    try {
+        const existing = await HolidaysModel.findOne({ name: name, date: date, isDeleted: false });
+        if (existing) {
+            return res.status(400).json({ message: "Holiday already exists for this date." });
+        }
+
+        const newHoliday = new HolidaysModel({
+            name,
+            description,
+            date
+        });
+
+        const savedHoliday = await newHoliday.save();
+        res.status(201).json(savedHoliday);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error adding holiday", error: error.message });
+    }
+}
+
+const editHoliday = async (req, res) => {
+    const { id, name, description, date } = req.body;
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (date !== undefined) updateData.date = date;
+
+    if (Object.keys(updateData).length === 0) {
+        return res.status(200).json({ message: "No updates provided, success response." });
+    }
+
+    try {
+        const updatedHoliday = await HolidaysModel.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedHoliday) {
+            return res.status(404).json({ message: "Holiday not found." });
+        }
+
+        res.status(200).json(updatedHoliday);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error updating holiday", error: error.message });
+    }
+}
+
+const deleteHoliday = async (req, res) => {
+    const { id } = req.body;
+
+    try {
+        const deletedHoliday = await HolidaysModel.findByIdAndUpdate(
+            id,
+            { isDeleted: true },
+            { new: true }
+        );
+
+        if (!deletedHoliday) {
+            return res.status(404).json({ message: "Holiday not found." });
+        }
+
+        res.status(200).json({ message: "Holiday deleted successfully." });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting holiday", error: error.message });
     }
 }
 
@@ -414,5 +609,9 @@ module.exports = {
     addLeaveType,
     editLeaveType,
     deleteLeaveType,
+    getHolidayList,
+    addHoliday,
+    editHoliday,
+    deleteHoliday,
     // testUserApi
 }

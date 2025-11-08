@@ -29,6 +29,33 @@ exports.deleteLeaveType = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
 
+exports.addHoliday = [
+    check('name').not().isEmpty().withMessage('Name is requied'),
+    check('date').not().isEmpty().withMessage('Date is required'),
+    check('description').optional(),
+];
+
+exports.editHoliday = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
+exports.deleteHoliday = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
+exports.addHolidayGroup = [
+    check('name').not().isEmpty().withMessage('Name is requied'),
+    check('holiday_id').not().isEmpty().withMessage('Holiday ID is required'),
+];
+
+exports.editHolidayGroup = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
+exports.deleteHolidayGroup = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
 exports.getDepartmentList = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
