@@ -3,7 +3,7 @@ const UsersModel = require('../models/users.js');
 
 // Initialize Firebase Admin SDK
 // Note: You need to put your firebase-service-account.json in the root directory
-const serviceAccount = require('../serviceAccount/r-os-848e8-firebase-adminsdk-fbsvc-71636aec4b.json');
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
