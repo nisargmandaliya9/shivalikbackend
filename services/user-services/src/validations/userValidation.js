@@ -6,12 +6,11 @@ exports.testUserApi = [
 
 exports.loginApi = [
     check('phone').not().isEmpty().withMessage('Phone is requied'),
-    check('password').not().isEmpty().withMessage('Password is requied'),
 ];
 
 exports.verifyOTP = [
     check('phone').not().isEmpty().withMessage('Phone is requied'),
-    check('otp').not().isEmpty().withMessage('OTP is requied'),
+    check('otpcode').not().isEmpty().withMessage('OTP is requied'),
 ];
 
 exports.sendPhoneOtp = [

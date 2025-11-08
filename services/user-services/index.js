@@ -37,7 +37,7 @@ const cron = require('node-cron');
 const { setupTerritoryRabbitMQ } = require('./src/libs/rabbitmq.js');
 
 var whitelist = [
-    'dev-sample-services.shivalikgroup.com','35.154.180.15','35.154.180.15:3011', 'localhost:8011', 'https://shivalikbackend-1.onrender.com',
+    'dev-sample-services.shivalikgroup.com','35.154.180.15','35.154.180.15:3011', 'localhost:8011', 'shivalikbackend-1.onrender.com',
   ];
 
 var corsOption = function (req, callback) {

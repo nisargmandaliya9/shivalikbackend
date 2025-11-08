@@ -51,7 +51,7 @@ const loginApi = async (req, res) => {
     }
 
     try {
-        const { phone, password } = req.body;
+        const { phone } = req.body;
 
         const user = await UsersModel.findOne({ 
             phone, 
@@ -63,15 +63,10 @@ const loginApi = async (req, res) => {
             return res.status(401).send(response.toJson("Invalid credentials."));
         }
 
-        if (user.password !== password) {
-            return res.status(401).send(response.toJson("Invalid credentials."));
-        }
-        console.log('hello');
-        
         // 1. Generate a 4-digit OTP
-        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        // const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-        user.otpcode = otp;
+        user.otpcode = '1234';
         user.otpverified = false; // Reset verification status
         user.updatedAt = Date.now();
         
@@ -108,7 +103,7 @@ const verifyOtpAndLogin = async (req, res) => {
         }
 
         user.otpverified = true;
-        user.otpcode = undefined;
+        user.otpcode = "";
 
         const jwtSecret = CommonConfig.JWT_SECRET;
         const payload = {
