@@ -69,9 +69,9 @@ const loginApi = async (req, res) => {
             return res.status(401).send(response.toJson("Invalid credentials."));
         }
 
-        if (user.role === "Admin") {
-            return res.status(403).send(response.toJson("Admins are not allowed to log in from this portal."));
-        }
+        // if (user.role === "Admin") {
+        //     return res.status(403).send(response.toJson("Admins are not allowed to log in from this portal."));
+        // }
 
         // 1. Generate a 4-digit OTP
         // const otp = Math.floor(1000 + Math.random() * 9000).toString();
