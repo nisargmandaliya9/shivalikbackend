@@ -83,6 +83,23 @@ exports.deleteLeaveGroup = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
 
+exports.getLeaveAssignmentList = [
+    check('year').optional().isInt().withMessage('Year must be a number'),
+    check('branch_id').optional().isMongoId().withMessage('Must be a valid branch ID'),
+    check('department_id').optional().isMongoId().withMessage('Must be a valid department ID'),
+];
+
+exports.addLeaveAssignment = [
+    check('branch_id').not().isEmpty().withMessage('Branch ID is required').isMongoId().withMessage('Must be a valid branch ID'),
+    check('department_id').not().isEmpty().withMessage('Department ID is required').isMongoId().withMessage('Must be a valid department ID'),
+    check('leave_group_id').not().isEmpty().withMessage('Leave Group ID is required').isMongoId().withMessage('Must be a valid leave group ID'),
+    check('year').not().isEmpty().withMessage('Year is required').isInt().withMessage('Year must be a valid number'),
+];
+
+exports.deleteLeaveAssignment = [
+    check('id').not().isEmpty().withMessage('ID is required').isMongoId().withMessage('Must be a valid ID'),
+];
+
 exports.getDepartmentList = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];

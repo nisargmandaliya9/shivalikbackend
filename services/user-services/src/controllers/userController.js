@@ -20,6 +20,7 @@ const BranchModel = require('../models/branchs.js');
 const HolidaysModel = require('../models/holidays.js');
 const HolidayGroupsModel = require("../models/holidaygroups.js");
 const LeaveGroupsModel = require('../models/leavegroups.js');
+const LeaveAssignmentsModel = require('../models/leaveassignments.js');
 // const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
 // const { territoryCache } = require("../utils/territoryCache.js");
 // const mongoose = require('mongoose');
@@ -720,6 +721,96 @@ const deleteEmployee = async (req, res) => {
     }
 }
 
+
+const getLeaveAssignmentList = async (req, res) => {
+    try {
+        const { year, branch_id, department_id } = req.body;
+
+        const filter = { isDeleted: false };
+
+        if (year) filter.year = year;
+        if (branch_id) filter.branch_id = branch_id;
+        if (department_id) filter.department_id = department_id;
+
+        const assignments = await LeaveAssignmentsModel.find(filter)
+            .populate({ path: 'branch_id', select: 'name' })
+            .populate({ path: 'department_id', select: 'name' })
+            .sort({ createdAt: -1 });
+
+        return res.status(200).send(response.toJson(assignments));
+    } catch (err) {
+        console.error('Error fetching leave assignments:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const addLeaveAssignment = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    const { branch_id, department_id, leave_group_id, year } = req.body;
+
+    try {
+        // Prevent duplicate assignment for same branch/department/leavegroup/year
+        const existing = await LeaveAssignmentsModel.findOne({
+            branch_id,
+            department_id,
+            leave_group_id,
+            year,
+            isDeleted: false
+        });
+        if (existing) {
+            return res.status(400).json({ message: 'Leave assignment already exists for this combination.' });
+        }
+
+        const newAssignment = new LeaveAssignmentsModel({
+            branch_id,
+            department_id,
+            leave_group_id,
+            year
+        });
+
+        const saved = await newAssignment.save();
+
+        // populate related names for response
+        const populated = await LeaveAssignmentsModel.findById(saved._id)
+            .populate({ path: 'branch_id', select: 'name' })
+            .populate({ path: 'department_id', select: 'name' })
+            .populate({ path: 'leave_group_id', select: 'name' });
+
+        return res.status(201).json(populated);
+    } catch (error) {
+        console.error('Error adding leave assignment:', error);
+        return res.status(500).json({ message: 'Error adding leave assignment', error: error.message });
+    }
+}
+
+const deleteLeaveAssignment = async (req, res) => {
+    const { id } = req.body;
+
+    try {
+        const deleted = await LeaveAssignmentsModel.findByIdAndUpdate(
+            id,
+            { isDeleted: true },
+            { new: true }
+        );
+
+        if (!deleted) {
+            return res.status(404).json({ message: 'Leave assignment not found.' });
+        }
+
+        return res.status(200).json({ message: 'Leave assignment deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting leave assignment:', error);
+        return res.status(500).json({ message: 'Error deleting leave assignment', error: error.message });
+    }
+}
+
+
 module.exports = {
     loginApi,
     verifyOtpAndLogin,
@@ -745,5 +836,8 @@ module.exports = {
     addLeaveGroup,
     editLeaveGroup,
     deleteLeaveGroup,
+    getLeaveAssignmentList,
+    addLeaveAssignment,
+    deleteLeaveAssignment,
     // testUserApi
 }
