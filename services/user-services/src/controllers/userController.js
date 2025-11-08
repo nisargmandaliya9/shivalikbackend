@@ -15,6 +15,8 @@ const CommonConfig = require('../config/common.js');
 // const CommonController = require('./commonController.js')
 const UsersModel = require('../models/users.js');
 const LeaveTypeModel = require('../models/leavetypes.js');
+const DepartmentsModel = require('../models/departments.js');
+const BranchModel = require('../models/branchs.js');
 // const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
 // const { territoryCache } = require("../utils/territoryCache.js");
 const mongoose = require('mongoose');
@@ -236,7 +238,31 @@ const deleteLeaveType = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Error deleting leave type", error: error.message });
     }
-} 
+}
+
+const getDepartmentList = async (req, res) => {
+    try {
+        const departments = await DepartmentsModel.find({isDeleted: false}).sort({ createdAt: -1 });
+        return res.status(200).send(response.toJson(departments));
+    } catch (err) {
+        console.error('Error fetching departments:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const getBranchList = async (req, res) => {
+    try {
+        const branches = await BranchModel.find({isDeleted: false}).sort({ createdAt: -1 });
+        return res.status(200).send(response.toJson(branches));
+    } catch (err) {
+        console.error('Error fetching branches:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
 
 const getEmployeeList = async (req, res) => {
     try {
@@ -378,6 +404,8 @@ const deleteEmployee = async (req, res) => {
 module.exports = {
     loginApi,
     verifyOtpAndLogin,
+    getDepartmentList,
+    getBranchList,
     getEmployeeList,
     addEmployee,
     editEmployee,

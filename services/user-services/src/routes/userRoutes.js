@@ -15,6 +15,9 @@ router.post("/add-leavetype", UserValidation.addLeaveType, UserController.addLea
 router.post("/edit-leavetype", UserValidation.editLeaveType, UserController.editLeaveType);
 router.post("/delete-leavetype", UserValidation.deleteLeaveType, UserController.deleteLeaveType);
 
+router.post("/department-list", [], UserController.getDepartmentList);
+router.post("/branch-list", [], UserController.getBranchList);
+
 router.post("/employee-list", UserValidation.getEmployeeList, UserController.getEmployeeList);
 router.post("/add-employee", UserValidation.addEmployee, UserController.addEmployee);
 router.post("/edit-employee", UserValidation.editEmployee, UserController.editEmployee);

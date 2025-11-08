@@ -29,6 +29,14 @@ exports.deleteLeaveType = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
 
+exports.getDepartmentList = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
+exports.getBranchList = [
+    check('id').not().isEmpty().withMessage('ID is required'),
+];
+
 exports.getEmployeeList = [
     check('id').not().isEmpty().withMessage('ID is required'),
 ];
