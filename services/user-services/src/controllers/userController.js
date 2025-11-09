@@ -760,7 +760,7 @@ const addEmployee = async (req, res) => {
 
         // Get leave assignment for employee's branch and department
         const currentYear = new Date().getFullYear();
-        console.log('current year---', currentYear);
+        // console.log('current year---', currentYear);
         
         const leaveAssignment = await LeaveAssignmentsModel.findOne({
             branch_id,
@@ -1046,7 +1046,7 @@ const requestLeave = async (req, res) => {
 
         // Get employee details including manager
         const employee = await UsersModel.findById(employee_id).populate('manager_id');
-        console.log('employee inside leave request:::--', employee);
+        // console.log('employee inside leave request:::--', employee);
 
         if (!employee) {
             return res.status(404).send(response.toJson("Employee not found"));
@@ -1054,7 +1054,7 @@ const requestLeave = async (req, res) => {
 
         // Check if employee has sufficient leave balance
         const currentYear = new Date().getFullYear();
-        console.log('currentYear:::--', currentYear);
+        // console.log('currentYear:::--', currentYear);
         
         const leaveBalance = await EmployeeLeaveBalancesModel.findOne({
             employee_id,
@@ -1339,7 +1339,7 @@ const getMyAvailableLeaves = async (req, res) => {
     try {
         const employee_id = req.body.id;
         const currentYear = new Date().getFullYear();
-        console.log('Fetching available leaves for employee:', employee_id  , 'for year:', currentYear);
+        // console.log('Fetching available leaves for employee:', employee_id  , 'for year:', currentYear);
         
         const leaveBalances = await EmployeeLeaveBalancesModel.find({
             employee_id,
@@ -1352,7 +1352,7 @@ const getMyAvailableLeaves = async (req, res) => {
             select: 'name applyOnHoliday applyOnPastDays applyBeforeDays'
         })
         .lean();
-        console.log('leaves for employee:', leaveBalances);
+        // console.log('leaves for employee:', leaveBalances);
         
         const availableLeaves = leaveBalances
             .filter(balance => {
@@ -1373,7 +1373,7 @@ const getMyAvailableLeaves = async (req, res) => {
                 }
             }))
             .sort((a, b) => a.name.localeCompare(b.name));
-        console.log('availableLeaves for employee:', availableLeaves);
+        // console.log('availableLeaves for employee:', availableLeaves);
 
         return res.status(200).send(response.toJson(availableLeaves));
 
