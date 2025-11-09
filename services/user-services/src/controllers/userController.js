@@ -1062,6 +1062,7 @@ const requestLeave = async (req, res) => {
             year: currentYear,
             isDeleted: false
         });
+        console.log('leaveBalance::::::', leaveBalance);
 
         if (!leaveBalance || leaveBalance.remaining_leaves < leave_taken) {
             return res.status(400).send(response.toJson("Insufficient leave balance"));
@@ -1078,7 +1079,8 @@ const requestLeave = async (req, res) => {
             reason,
             status: 'Pending'
         });
-
+        console.log('leaveRequest::::::', leaveRequest);
+        
         await leaveRequest.save();
 
         // Reserve leaves immediately by updating employee leave balance
@@ -1089,25 +1091,25 @@ const requestLeave = async (req, res) => {
         }
 
         // Send push notification to manager if they have a device token
-        if (employee.manager_id.device_token) {
-            const notificationTitle = 'New Leave Request';
-            const notificationBody = `${employee.name} has requested ${leave_taken} day(s) leave for ${new Date(from_date).toLocaleDateString()} to ${new Date(to_date).toLocaleDateString()}`;
+        // if (employee.manager_id.device_token) {
+        //     const notificationTitle = 'New Leave Request';
+        //     const notificationBody = `${employee.name} has requested ${leave_taken} day(s) leave for ${new Date(from_date).toLocaleDateString()} to ${new Date(to_date).toLocaleDateString()}`;
 
-            try {
-                await sendPushNotification(
-                    employee.manager_id.device_token,
-                    notificationTitle,
-                    notificationBody,
-                    {
-                        type: 'LEAVE_REQUEST',
-                        request_id: leaveRequest._id.toString()
-                    }
-                );
-            } catch (notificationError) {
-                console.error('Failed to send push notification:', notificationError);
-                // Don't throw error, continue with response
-            }
-        }
+        //     try {
+        //         await sendPushNotification(
+        //             employee.manager_id.device_token,
+        //             notificationTitle,
+        //             notificationBody,
+        //             {
+        //                 type: 'LEAVE_REQUEST',
+        //                 request_id: leaveRequest._id.toString()
+        //             }
+        //         );
+        //     } catch (notificationError) {
+        //         console.error('Failed to send push notification:', notificationError);
+        //         // Don't throw error, continue with response
+        //     }
+        // }
 
         // Return response with populated data
         const populatedRequest = await LeaveRequestsModel.findById(leaveRequest._id)
