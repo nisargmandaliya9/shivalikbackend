@@ -1224,7 +1224,8 @@ const getMyAvailableLeaves = async (req, res) => {
     try {
         const employee_id = req.id;
         const currentYear = new Date().getFullYear();
-
+        console.log('Fetching available leaves for employee:', employee_id  , 'for year:', currentYear);
+        
         const leaveBalances = await EmployeeLeaveBalancesModel.find({
             employee_id,
             year: currentYear,
@@ -1236,7 +1237,8 @@ const getMyAvailableLeaves = async (req, res) => {
             select: 'name applyOnHoliday applyOnPastDays applyBeforeDays'
         })
         .lean();
-
+        console.log('leaves for employee:', leaveBalances);
+        
         const availableLeaves = leaveBalances
             .filter(balance => {
                 const totalLeaves = balance.total_leaves || 0;
@@ -1256,6 +1258,7 @@ const getMyAvailableLeaves = async (req, res) => {
                 }
             }))
             .sort((a, b) => a.name.localeCompare(b.name));
+        console.log('availableLeaves for employee:', availableLeaves);
 
         return res.status(200).send(response.toJson(availableLeaves));
 
