@@ -184,6 +184,9 @@ exports.deleteEmployee = [
 ];
 
 exports.requestLeave = [
+    check('id')
+        .not().isEmpty().withMessage('ID is required')
+        .isMongoId().withMessage('Must be a valid ID'),
     check('leave_type_id')
         .not().isEmpty().withMessage('Leave type is required')
         .isMongoId().withMessage('Must be a valid leave type ID'),
