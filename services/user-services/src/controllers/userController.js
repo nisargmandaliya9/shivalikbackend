@@ -1215,6 +1215,102 @@ const getMyLeaveBalances = async (req, res) => {
     }
 }
 
+const getMyAvailableLeaves = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const employee_id = req.id;
+        const currentYear = new Date().getFullYear();
+
+        // Get employee details including department and branch
+        const employee = await UsersModel.findById(employee_id)
+            .select('department_id branch_id')
+            .lean();
+
+        if (!employee) {
+            return res.status(404).send(response.toJson("Employee not found"));
+        }
+
+        // Get current leave assignment based on department and branch
+        const leaveAssignment = await LeaveAssignmentsModel.findOne({
+            department_id: employee.department_id,
+            branch_id: employee.branch_id,
+            year: currentYear,
+            isDeleted: false
+        }).populate({
+            path: 'leave_group_id',
+            match: { isDeleted: false, isActive: true },
+            select: 'name allocation_type year_end_policy leave_types',
+            populate: {
+                path: 'leave_types.leave_type_id',
+                match: { isDeleted: false, isActive: true },
+                select: 'name applyOnHoliday applyOnPastDays applyBeforeDays'
+            }
+        }).lean();
+
+        if (!leaveAssignment || !leaveAssignment.leave_group_id) {
+            return res.status(404).send(response.toJson("No leave group assigned to your department"));
+        }
+
+        // Get current leave balances
+        const leaveBalances = await EmployeeLeaveBalancesModel.find({
+            employee_id,
+            year: currentYear,
+            isDeleted: false
+        }).lean();
+
+        // Create a map of leave balances for quick lookup
+        const balanceMap = new Map(
+            leaveBalances.map(balance => [balance.leave_type_id.toString(), balance])
+        );
+
+        // Combine leave types with their balances
+        const availableLeaves = leaveAssignment.leave_group_id.leave_types
+            .filter(lt => lt.leave_type_id) // Filter out any null leave types
+            .map(lt => {
+                const balance = balanceMap.get(lt.leave_type_id._id.toString()) || {
+                    total_leaves: lt.paid_leaves,
+                    used_leaves: 0
+                };
+
+                return {
+                    leave_type_id: lt.leave_type_id._id,
+                    name: lt.leave_type_id.name,
+                    allocation: {
+                        total_leaves: balance.total_leaves || lt.paid_leaves,
+                        used_leaves: balance.used_leaves || 0,
+                        remaining_leaves: (balance.total_leaves || lt.paid_leaves) - (balance.used_leaves || 0)
+                    },
+                    rules: {
+                        applyOnHoliday: lt.leave_type_id.applyOnHoliday,
+                        applyOnPastDays: lt.leave_type_id.applyOnPastDays,
+                        applyBeforeDays: lt.leave_type_id.applyBeforeDays
+                    }
+                };
+            });
+
+        const response = {
+            leave_group: {
+                name: leaveAssignment.leave_group_id.name,
+                allocation_type: leaveAssignment.leave_group_id.allocation_type,
+                year_end_policy: leaveAssignment.leave_group_id.year_end_policy
+            },
+            available_leaves: availableLeaves
+        };
+
+        return res.status(200).send(response.toJson(response));
+
+    } catch (err) {
+        console.error('Error fetching available leaves:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
 module.exports = {
     loginApi,
     verifyOtpAndLogin,
@@ -1250,5 +1346,6 @@ module.exports = {
     rejectLeave,
     getMyLeaveRequests,
     getMyLeaveBalances,
+    getMyAvailableLeaves,
     // testUserApi
 }

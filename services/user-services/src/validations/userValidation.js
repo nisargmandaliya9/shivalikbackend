@@ -219,3 +219,9 @@ exports.getMyLeaveBalances = [
         .not().isEmpty().withMessage('ID is required')
         .isMongoId().withMessage('Must be a valid user ID'),
 ];
+
+exports.getMyAvailableLeaves = [
+    check('id')
+        .not().isEmpty().withMessage('ID is required')
+        .isMongoId().withMessage('Must be a valid user ID'),
+];
