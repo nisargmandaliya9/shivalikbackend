@@ -26,7 +26,11 @@ const leaveRequestSchema = new Schema({
         type: Date, 
         default: Date.now 
     },
-    leave_date: { 
+    to_date: { 
+        type: Date, 
+        required: true 
+    },
+    from_date: { 
         type: Date, 
         required: true 
     },

@@ -167,8 +167,11 @@ exports.requestLeave = [
     check('leave_taken')
         .not().isEmpty().withMessage('Leave taken is required')
         .isIn([0.5, 1]).withMessage('Leave taken must be either 0.5 or 1'),
-    check('leave_date')
-        .not().isEmpty().withMessage('Leave date is required')
+    check('from_date')
+        .not().isEmpty().withMessage('From date is required')
+        .isISO8601().withMessage('Must be a valid date'),
+    check('to_date')
+        .not().isEmpty().withMessage('To date is required')
         .isISO8601().withMessage('Must be a valid date'),
     check('reason')
         .not().isEmpty().withMessage('Reason is required')

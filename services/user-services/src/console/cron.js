@@ -53,11 +53,11 @@ const autoCancelPendingLeaves = async () => {
 
 		const now = new Date();
 
-		// Find pending leave requests whose leave_date has passed
+		// Find pending leave requests whose to_date has passed
 		const toCancel = await LeaveRequestsModel.find({
 			status: 'Pending',
 			isDeleted: false,
-			leave_date: { $lt: now }
+			to_date: { $lt: now },
 		});
 
 		if (!toCancel || toCancel.length === 0) {
@@ -78,7 +78,7 @@ const autoCancelPendingLeaves = async () => {
 						await sendPushNotification(
 							employee.device_token,
 							'Leave Auto-cancelled',
-							`Your leave request for ${new Date(req.leave_date).toLocaleDateString()} was auto-cancelled because it was not actioned.`,
+							`Your leave request for ${new Date(req.from_date).toLocaleDateString()} to ${new Date(req.to_date).toLocaleDateString()} was auto-cancelled because it was not actioned.`,
 							{ type: 'LEAVE_AUTO_CANCELLED', request_id: req._id.toString() }
 						);
 					} catch (pushErr) {

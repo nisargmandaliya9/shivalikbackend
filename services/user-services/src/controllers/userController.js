@@ -926,7 +926,7 @@ const requestLeave = async (req, res) => {
     }
 
     try {
-        const { leave_type_id, leave_taken, leave_date, reason } = req.body;
+        const { leave_type_id, leave_taken, to_date, from_date, reason } = req.body;
         const employee_id = req.id; // Get employee ID from JWT token
 
         // Get employee details including manager
@@ -958,7 +958,8 @@ const requestLeave = async (req, res) => {
             leave_type_id,
             manager_id: employee.manager_id._id,
             leave_taken,
-            leave_date: new Date(leave_date),
+            to_date: new Date(to_date),
+            from_date: new Date(from_date),
             reason,
             status: 'Pending'
         });
@@ -968,8 +969,8 @@ const requestLeave = async (req, res) => {
         // Send push notification to manager if they have a device token
         if (employee.manager_id.device_token) {
             const notificationTitle = 'New Leave Request';
-            const notificationBody = `${employee.name} has requested ${leave_taken} day(s) leave for ${new Date(leave_date).toLocaleDateString()}`;
-            
+            const notificationBody = `${employee.name} has requested ${leave_taken} day(s) leave for ${new Date(from_date).toLocaleDateString()} to ${new Date(to_date).toLocaleDateString()}`;
+
             try {
                 await sendPushNotification(
                     employee.manager_id.device_token,
@@ -1053,7 +1054,7 @@ const approveLeave = async (req, res) => {
         }
 
         // Update leave balance for employee
-        const leaveDate = new Date(leaveRequest.leave_date);
+        const leaveDate = new Date(leaveRequest.from_date);
         const year = leaveDate.getFullYear();
 
         const leaveBalance = await EmployeeLeaveBalancesModel.findOne({
@@ -1080,7 +1081,7 @@ const approveLeave = async (req, res) => {
                 await sendPushNotification(
                     employee.device_token,
                     'Leave Approved',
-                    `Your leave request for ${new Date(leaveRequest.leave_date).toLocaleDateString()} has been approved.`,
+                    `Your leave request for ${new Date(leaveRequest.from_date).toLocaleDateString()} to ${new Date(leaveRequest.to_date).toLocaleDateString()} has been approved.`,
                     { type: 'LEAVE_APPROVED', request_id: leaveRequest._id.toString() }
                 );
             } catch (pushErr) {
@@ -1136,7 +1137,7 @@ const rejectLeave = async (req, res) => {
                 await sendPushNotification(
                     employee.device_token,
                     'Leave Rejected',
-                    `Your leave request for ${new Date(leaveRequest.leave_date).toLocaleDateString()} was rejected. Reason: ${rejection_reason}`,
+                    `Your leave request for ${new Date(leaveRequest.from_date).toLocaleDateString()} to ${new Date(leaveRequest.to_date).toLocaleDateString()} was rejected. Reason: ${rejection_reason}`,
                     { type: 'LEAVE_REJECTED', request_id: leaveRequest._id.toString() }
                 );
             } catch (pushErr) {
