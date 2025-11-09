@@ -1159,6 +1159,62 @@ const rejectLeave = async (req, res) => {
     }
 }
 
+const getMyLeaveRequests = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const employee_id = req.id;
+        const { status } = req.body;
+
+        const query = { employee_id, isDeleted: false };
+        if (status) {
+            query.status = status;
+        }
+
+        const requests = await LeaveRequestsModel.find(query)
+            .populate('leave_type_id', 'name')
+            .populate('manager_id', 'name phone')
+            .sort({ createdAt: -1 });
+
+        return res.status(200).send(response.toJson(requests));
+    } catch (err) {
+        console.error('Error fetching employee leave requests:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const getMyLeaveBalances = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const employee_id = req.id;
+        const currentYear = new Date().getFullYear();
+
+        const leaveBalances = await EmployeeLeaveBalancesModel.find({
+            employee_id,
+            year: currentYear,
+            isDeleted: false
+        })
+        .populate('leave_type_id', 'name')
+        .sort({ 'leave_type_id.name': 1 });
+
+        return res.status(200).send(response.toJson(leaveBalances));
+    } catch (err) {
+        console.error('Error fetching employee leave balances:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
 module.exports = {
     loginApi,
     verifyOtpAndLogin,
@@ -1192,5 +1248,7 @@ module.exports = {
     getManagerLeaveRequests,
     approveLeave,
     rejectLeave,
+    getMyLeaveRequests,
+    getMyLeaveBalances,
     // testUserApi
 }

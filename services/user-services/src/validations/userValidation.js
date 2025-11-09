@@ -205,3 +205,17 @@ exports.rejectLeave = [
     check('request_id').not().isEmpty().withMessage('Request ID is required').isMongoId().withMessage('Must be a valid request ID'),
     check('rejection_reason').not().isEmpty().withMessage('Rejection reason is required').isLength({ min: 3 }).withMessage('Rejection reason must be at least 3 characters')
 ];
+
+exports.getMyLeaveRequests = [
+    check('id')
+        .not().isEmpty().withMessage('ID is required')
+        .isMongoId().withMessage('Must be a valid user ID'),
+    check('status')
+        .optional().isIn(['Pending', 'Approved', 'Rejected']).withMessage('Invalid status filter')
+];
+
+exports.getMyLeaveBalances = [
+    check('id')
+        .not().isEmpty().withMessage('ID is required')
+        .isMongoId().withMessage('Must be a valid user ID'),
+];

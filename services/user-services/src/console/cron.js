@@ -97,12 +97,12 @@ const autoCancelPendingLeaves = async () => {
 }
 
 // Schedule the auto-cancel job to run every day at 00:00
-// try {
-// 	cron.schedule('* * * * *', autoCancelPendingLeaves);
-// 	console.log('Scheduled autoCancelPendingLeaves to run every minute');
-// } catch (scheduleErr) {
-// 	console.error('Failed to schedule autoCancelPendingLeaves:', scheduleErr);
-// }
+try {
+	cron.schedule('0 0 * * *', autoCancelPendingLeaves);
+	console.log('Scheduled autoCancelPendingLeaves to run every day at 00:00');
+} catch (scheduleErr) {
+	console.error('Failed to schedule autoCancelPendingLeaves:', scheduleErr);
+}
 
 // Defind object to all function.
 const obj = {
