@@ -1181,19 +1181,19 @@ const approveLeave = async (req, res) => {
         await leaveRequest.save();
 
         // Notify employee
-        const employee = await UsersModel.findById(leaveRequest.employee_id);
-        if (employee && employee.device_token) {
-            try {
-                await sendPushNotification(
-                    employee.device_token,
-                    'Leave Approved',
-                    `Your leave request for ${new Date(leaveRequest.from_date).toLocaleDateString()} to ${new Date(leaveRequest.to_date).toLocaleDateString()} has been approved.`,
-                    { type: 'LEAVE_APPROVED', request_id: leaveRequest._id.toString() }
-                );
-            } catch (pushErr) {
-                console.error('Push notification failed:', pushErr);
-            }
-        }
+        // const employee = await UsersModel.findById(leaveRequest.employee_id);
+        // if (employee && employee.device_token) {
+        //     try {
+        //         await sendPushNotification(
+        //             employee.device_token,
+        //             'Leave Approved',
+        //             `Your leave request for ${new Date(leaveRequest.from_date).toLocaleDateString()} to ${new Date(leaveRequest.to_date).toLocaleDateString()} has been approved.`,
+        //             { type: 'LEAVE_APPROVED', request_id: leaveRequest._id.toString() }
+        //         );
+        //     } catch (pushErr) {
+        //         console.error('Push notification failed:', pushErr);
+        //     }
+        // }
 
         const populated = await LeaveRequestsModel.findById(leaveRequest._id)
             .populate('employee_id', 'name email')
