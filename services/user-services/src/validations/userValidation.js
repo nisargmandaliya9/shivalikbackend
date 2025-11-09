@@ -161,9 +161,6 @@ exports.deleteEmployee = [
 ];
 
 exports.requestLeave = [
-    check('id')
-        .not().isEmpty().withMessage('ID is required')
-        .isMongoId().withMessage('Must be a valid leave type ID'),
     check('leave_type_id')
         .not().isEmpty().withMessage('Leave type is required')
         .isMongoId().withMessage('Must be a valid leave type ID'),
@@ -191,4 +188,17 @@ exports.getEmployeeLeaveBalance = [
         .isInt().withMessage('Year must be a valid number'),
     // check('employee_id').optional().isMongoId().withMessage('Must be a valid employee ID'),
     // check('leave_type_id').optional().isMongoId().withMessage('Must be a valid leave type ID'),
+];
+
+exports.managerLeaveRequests = [
+    check('status').optional().isIn(['Pending', 'Approved', 'Rejected']).withMessage('Invalid status filter')
+];
+
+exports.approveLeave = [
+    check('request_id').not().isEmpty().withMessage('Request ID is required').isMongoId().withMessage('Must be a valid request ID')
+];
+
+exports.rejectLeave = [
+    check('request_id').not().isEmpty().withMessage('Request ID is required').isMongoId().withMessage('Must be a valid request ID'),
+    check('rejection_reason').not().isEmpty().withMessage('Rejection reason is required').isLength({ min: 3 }).withMessage('Rejection reason must be at least 3 characters')
 ];

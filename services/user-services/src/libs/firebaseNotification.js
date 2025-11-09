@@ -1,5 +1,4 @@
 const admin = require('firebase-admin');
-const UsersModel = require('../models/users.js');
 
 // Initialize Firebase Admin SDK
 // Note: You need to put your firebase-service-account.json in the root directory
@@ -9,12 +8,10 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
-const sendPushNotification = async (userId, title, body, data = {}) => {
+const sendPushNotification = async (deviceToken, title, body, data = {}) => {
     try {
-        // Get user's FCM token from the database
-        const user = await UsersModel.findById(userId);
-        if (!user || !user.device_token) {
-            console.log('No FCM token found for user:', userId);
+        if (!deviceToken) {
+            console.log('No device token available to send notification');
             return false;
         }
 
@@ -27,7 +24,7 @@ const sendPushNotification = async (userId, title, body, data = {}) => {
                 ...data,
                 click_action: 'NOTIFICATION_CLICK'
             },
-            token: user.device_token
+            token: deviceToken
         };
 
         const response = await admin.messaging().send(message);

@@ -625,7 +625,7 @@ const addEmployee = async (req, res) => {
         return res.status(400).send(response.toJson(errors.errors[0].msg));
     }
 
-    const { name, email, phone, role, branch_id, department_id, dob } = req.body;
+    const { name, email, phone, role, branch_id, department_id, manager_id, dob } = req.body;
 
     try {
         // Create new user
@@ -636,6 +636,7 @@ const addEmployee = async (req, res) => {
             role,
             branch_id,
             department_id,
+            manager_id,
             dob: dob || '',
             profile_image: 'default.jpg'
         });
@@ -1001,6 +1002,162 @@ const requestLeave = async (req, res) => {
     }
 }
 
+const getManagerLeaveRequests = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const manager_id = req.id; // manager's id from auth
+        const { status } = req.body;
+
+        const query = { manager_id, isDeleted: false };
+        if (status) query.status = status;
+
+        const requests = await LeaveRequestsModel.find(query)
+            .populate('employee_id', 'name email device_token')
+            .populate('leave_type_id', 'name')
+            .sort({ createdAt: -1 });
+
+        return res.status(200).send(response.toJson(requests));
+    } catch (err) {
+        console.error('Error fetching manager leave requests:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const approveLeave = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const manager_id = req.id;
+        const { request_id } = req.body;
+
+        const leaveRequest = await LeaveRequestsModel.findById(request_id);
+        if (!leaveRequest || leaveRequest.isDeleted) {
+            return res.status(404).send(response.toJson('Leave request not found'));
+        }
+
+        if (String(leaveRequest.manager_id) !== String(manager_id)) {
+            return res.status(403).send(response.toJson('Not authorized to approve this request'));
+        }
+
+        if (leaveRequest.status !== 'Pending') {
+            return res.status(400).send(response.toJson('Only pending requests can be approved'));
+        }
+
+        // Update leave balance for employee
+        const leaveDate = new Date(leaveRequest.leave_date);
+        const year = leaveDate.getFullYear();
+
+        const leaveBalance = await EmployeeLeaveBalancesModel.findOne({
+            employee_id: leaveRequest.employee_id,
+            leave_type_id: leaveRequest.leave_type_id,
+            year,
+            isDeleted: false
+        });
+
+        if (!leaveBalance || leaveBalance.remaining_leaves < leaveRequest.leave_taken) {
+            return res.status(400).send(response.toJson('Insufficient leave balance to approve'));
+        }
+
+        leaveBalance.used_leaves = (leaveBalance.used_leaves || 0) + Number(leaveRequest.leave_taken);
+        await leaveBalance.save();
+
+        leaveRequest.status = 'Approved';
+        await leaveRequest.save();
+
+        // Notify employee
+        const employee = await UsersModel.findById(leaveRequest.employee_id);
+        if (employee && employee.device_token) {
+            try {
+                await sendPushNotification(
+                    employee.device_token,
+                    'Leave Approved',
+                    `Your leave request for ${new Date(leaveRequest.leave_date).toLocaleDateString()} has been approved.`,
+                    { type: 'LEAVE_APPROVED', request_id: leaveRequest._id.toString() }
+                );
+            } catch (pushErr) {
+                console.error('Push notification failed:', pushErr);
+            }
+        }
+
+        const populated = await LeaveRequestsModel.findById(leaveRequest._id)
+            .populate('employee_id', 'name email')
+            .populate('leave_type_id', 'name')
+            .populate('manager_id', 'name email');
+
+        return res.status(200).send(response.toJson(populated));
+    } catch (err) {
+        console.error('Error approving leave:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const rejectLeave = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+
+    try {
+        const manager_id = req.id;
+        const { request_id, rejection_reason } = req.body;
+
+        const leaveRequest = await LeaveRequestsModel.findById(request_id);
+        if (!leaveRequest || leaveRequest.isDeleted) {
+            return res.status(404).send(response.toJson('Leave request not found'));
+        }
+
+        if (String(leaveRequest.manager_id) !== String(manager_id)) {
+            return res.status(403).send(response.toJson('Not authorized to reject this request'));
+        }
+
+        if (leaveRequest.status !== 'Pending') {
+            return res.status(400).send(response.toJson('Only pending requests can be rejected'));
+        }
+
+        leaveRequest.status = 'Rejected';
+        leaveRequest.rejection_reason = rejection_reason;
+        await leaveRequest.save();
+
+        // Notify employee
+        const employee = await UsersModel.findById(leaveRequest.employee_id);
+        if (employee && employee.device_token) {
+            try {
+                await sendPushNotification(
+                    employee.device_token,
+                    'Leave Rejected',
+                    `Your leave request for ${new Date(leaveRequest.leave_date).toLocaleDateString()} was rejected. Reason: ${rejection_reason}`,
+                    { type: 'LEAVE_REJECTED', request_id: leaveRequest._id.toString() }
+                );
+            } catch (pushErr) {
+                console.error('Push notification failed:', pushErr);
+            }
+        }
+
+        const populated = await LeaveRequestsModel.findById(leaveRequest._id)
+            .populate('employee_id', 'name email')
+            .populate('leave_type_id', 'name')
+            .populate('manager_id', 'name email');
+
+        return res.status(200).send(response.toJson(populated));
+    } catch (err) {
+        console.error('Error rejecting leave:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
 module.exports = {
     loginApi,
     verifyOtpAndLogin,
@@ -1031,5 +1188,8 @@ module.exports = {
     deleteLeaveAssignment,
     getEmployeeLeaveBalance,
     requestLeave,
+    getManagerLeaveRequests,
+    approveLeave,
+    rejectLeave,
     // testUserApi
 }

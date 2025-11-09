@@ -42,5 +42,8 @@ router.post("/delete-employee", UserValidation.deleteEmployee, UserController.de
 router.post("/employee-leave-balance", UserValidation.getEmployeeLeaveBalance, UserController.getEmployeeLeaveBalance);
 
 router.post("/request-leave", UserValidation.requestLeave, UserController.requestLeave);
+router.post("/manager-leave-requests", UserValidation.managerLeaveRequests, UserController.getManagerLeaveRequests);
+router.post("/approve-leave", UserValidation.approveLeave, UserController.approveLeave);
+router.post("/reject-leave", UserValidation.rejectLeave, UserController.rejectLeave);
 
 module.exports = router;

@@ -10,6 +10,9 @@ const { cronLogger } = require('../config/logger');
 const moment = require("moment");
 const SendMail = require('../libs/sendMail.js')
 const axios = require('axios');
+const LeaveRequestsModel = require('../models/leaverequests.js');
+const UsersModel = require('../models/users.js');
+const { sendPushNotification } = require('../libs/firebaseNotification.js');
 
 // MongoDB Atlas connection string
 const mongoURI = process.env.ENTRYTRACKING_DB_URL;
@@ -43,6 +46,63 @@ const webRegistrationReportCron = async () => {
     console.error('Lead Task Report Cron Error:', err);
   }
 };
+
+const autoCancelPendingLeaves = async () => {
+	try {
+		console.log('Auto-cancel pending leaves cron started');
+
+		const now = new Date();
+
+		// Find pending leave requests whose leave_date has passed
+		const toCancel = await LeaveRequestsModel.find({
+			status: 'Pending',
+			isDeleted: false,
+			leave_date: { $lt: now }
+		});
+
+		if (!toCancel || toCancel.length === 0) {
+			console.log('No pending leaves to auto-cancel');
+			return;
+		}
+
+		for (const req of toCancel) {
+			try {
+				req.status = 'Rejected';
+				req.rejection_reason = 'Auto cancelled: leave date passed without action';
+				await req.save();
+
+				// Notify employee about auto-rejection
+				const employee = await UsersModel.findById(req.employee_id);
+				if (employee && employee.device_token) {
+					try {
+						await sendPushNotification(
+							employee.device_token,
+							'Leave Auto-cancelled',
+							`Your leave request for ${new Date(req.leave_date).toLocaleDateString()} was auto-cancelled because it was not actioned.`,
+							{ type: 'LEAVE_AUTO_CANCELLED', request_id: req._id.toString() }
+						);
+					} catch (pushErr) {
+						console.error('Push notification failed for auto-cancel:', pushErr);
+					}
+				}
+			} catch (innerErr) {
+				console.error('Failed to auto-cancel a leave request:', innerErr);
+			}
+		}
+
+		console.log(`Auto-cancelled ${toCancel.length} pending leave(s)`);
+	} catch (err) {
+		console.error('Error in autoCancelPendingLeaves cron:', err);
+	}
+}
+
+// Schedule the auto-cancel job to run every day at 00:00
+// try {
+// 	cron.schedule('* * * * *', autoCancelPendingLeaves);
+// 	console.log('Scheduled autoCancelPendingLeaves to run every minute');
+// } catch (scheduleErr) {
+// 	console.error('Failed to schedule autoCancelPendingLeaves:', scheduleErr);
+// }
 
 // Defind object to all function.
 const obj = {
