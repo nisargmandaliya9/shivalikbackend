@@ -24,10 +24,12 @@ const UsersSchema = new Schema({
     },
     email: {
         type: String,
+        unique: true,
         required: true
     },
     phone: {
         type: String,
+        unique: true,
         required: true
     },
     otpcode: {
