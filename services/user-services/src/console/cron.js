@@ -60,6 +60,26 @@ const autoCancelPendingLeaves = async () => {
 				req.rejection_reason = 'Auto cancelled: leave date passed without action';
 				await req.save();
 
+				// Refund reserved leaves back to employee balance
+				try {
+					const leaveDate = new Date(req.from_date);
+					const year = leaveDate.getFullYear();
+					const leaveBalance = await require('../models/employeeleavebalances.js').findOne({
+						employee_id: req.employee_id,
+						leave_type_id: req.leave_type_id,
+						year,
+						isDeleted: false
+					});
+
+					if (leaveBalance) {
+						leaveBalance.used_leaves = Math.max(0, (leaveBalance.used_leaves || 0) - Number(req.leave_taken));
+						leaveBalance.remaining_leaves = Math.max(0, (leaveBalance.remaining_leaves || 0) + Number(req.leave_taken));
+						await leaveBalance.save();
+					}
+				} catch (refundErr) {
+					console.error('Failed to refund leave balance after auto-cancel:', refundErr);
+				}
+
 				// Notify employee about auto-rejection
 				const employee = await UsersModel.findById(req.employee_id);
 				if (employee && employee.device_token) {

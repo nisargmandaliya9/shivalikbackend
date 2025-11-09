@@ -1081,6 +1081,13 @@ const requestLeave = async (req, res) => {
 
         await leaveRequest.save();
 
+        // Reserve leaves immediately by updating employee leave balance
+        if (leaveBalance) {
+            leaveBalance.used_leaves = (leaveBalance.used_leaves || 0) + Number(leave_taken);
+            leaveBalance.remaining_leaves = (leaveBalance.remaining_leaves || 0) - Number(leave_taken);
+            await leaveBalance.save();
+        }
+
         // Send push notification to manager if they have a device token
         if (employee.manager_id.device_token) {
             const notificationTitle = 'New Leave Request';
@@ -1168,24 +1175,6 @@ const approveLeave = async (req, res) => {
             return res.status(400).send(response.toJson('Only pending requests can be approved'));
         }
 
-        // Update leave balance for employee
-        const leaveDate = new Date(leaveRequest.from_date);
-        const year = leaveDate.getFullYear();
-
-        const leaveBalance = await EmployeeLeaveBalancesModel.findOne({
-            employee_id: leaveRequest.employee_id,
-            leave_type_id: leaveRequest.leave_type_id,
-            year,
-            isDeleted: false
-        });
-
-        if (!leaveBalance || leaveBalance.remaining_leaves < leaveRequest.leave_taken) {
-            return res.status(400).send(response.toJson('Insufficient leave balance to approve'));
-        }
-
-        leaveBalance.used_leaves = (leaveBalance.used_leaves || 0) + Number(leaveRequest.leave_taken);
-        await leaveBalance.save();
-
         leaveRequest.status = 'Approved';
         await leaveRequest.save();
 
@@ -1244,6 +1233,26 @@ const rejectLeave = async (req, res) => {
         leaveRequest.status = 'Rejected';
         leaveRequest.rejection_reason = rejection_reason;
         await leaveRequest.save();
+
+        // Refund reserved leaves back to employee balance
+        try {
+            const leaveDate = new Date(leaveRequest.from_date);
+            const year = leaveDate.getFullYear();
+            const leaveBalance = await EmployeeLeaveBalancesModel.findOne({
+                employee_id: leaveRequest.employee_id,
+                leave_type_id: leaveRequest.leave_type_id,
+                year,
+                isDeleted: false
+            });
+
+            if (leaveBalance) {
+                leaveBalance.used_leaves = Math.max(0, (leaveBalance.used_leaves || 0) - Number(leaveRequest.leave_taken));
+                leaveBalance.remaining_leaves = Math.max(0, (leaveBalance.remaining_leaves || 0) + Number(leaveRequest.leave_taken));
+                await leaveBalance.save();
+            }
+        } catch (refundErr) {
+            console.error('Failed to refund leave balance after rejection:', refundErr);
+        }
 
         // Notify employee
         const employee = await UsersModel.findById(leaveRequest.employee_id);
