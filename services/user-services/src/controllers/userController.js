@@ -524,6 +524,30 @@ const assignHolidayGroup = async (req, res) => {
     }
 }
 
+const deleteAssignHolidayGroup = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+    const { id } = req.body;
+    try {
+        const updated = await HolidayGroupAssignmentModel.findByIdAndUpdate(
+            id,
+            { holiday_group_id: null, isDeleted: true },
+            { new: true }
+        );
+        if (!updated) {
+            return res.status(404).send(response.toJson("Holiday Group Assignment not found."));
+        }
+        return res.status(200).send(response.toJson({ message: "Holiday Group assignment deleted successfully." }));
+    } catch (err) {
+        console.error('Error deleting holiday group assignment:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
 // Leave Groups CRUD Operations
 const getLeaveGroupList = async (req, res) => {
     try {
@@ -1475,6 +1499,7 @@ module.exports = {
     deleteHolidayGroup,
     getHolidayGroupAssignmentList,
     assignHolidayGroup,
+    deleteAssignHolidayGroup,
 
     getLeaveGroupList,
     addLeaveGroup,

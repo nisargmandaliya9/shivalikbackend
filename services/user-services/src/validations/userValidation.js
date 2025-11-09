@@ -73,6 +73,12 @@ exports.assignHolidayGroup = [
         .isMongoId().withMessage('Must be a valid Branch ID'),
 ];
 
+exports.deleteAssignHolidayGroup = [
+    check('id')
+        .not().isEmpty().withMessage('ID is required')
+        .isMongoId().withMessage('Must be a valid ID'),
+];
+
 exports.addLeaveGroup = [
     check('name').not().isEmpty().withMessage('Name is required'),
     check('leave_types').isArray().withMessage('Leave types must be an array')

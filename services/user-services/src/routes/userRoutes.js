@@ -28,6 +28,7 @@ router.post("/delete-holidaygroup", UserValidation.deleteHolidayGroup, UserContr
 
 router.get("/holidaygroupassignment-list", [], UserController.getHolidayGroupAssignmentList);
 router.post("/assign-holidaygroup", UserValidation.assignHolidayGroup, UserController.assignHolidayGroup);
+router.post("/delete-assign-holidaygroup", UserValidation.deleteAssignHolidayGroup, UserController.deleteAssignHolidayGroup);
 
 router.get("/leavegroup-list", [], UserController.getLeaveGroupList);
 router.post("/add-leavegroup", UserValidation.addLeaveGroup, UserController.addLeaveGroup);
