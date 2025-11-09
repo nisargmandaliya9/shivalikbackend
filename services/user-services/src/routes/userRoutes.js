@@ -48,6 +48,6 @@ router.post("/reject-leave", UserValidation.rejectLeave, UserController.rejectLe
 
 // Employee's own leave requests and balances
 router.post("/my-leave-requests", UserValidation.getMyLeaveRequests, UserController.getMyLeaveRequests);
-router.get("/my-leave-balances", UserValidation.getMyLeaveBalances, UserController.getMyLeaveBalances);
+router.post("/my-leave-balances", UserValidation.getMyLeaveBalances, UserController.getMyLeaveBalances);
 
 module.exports = router;
