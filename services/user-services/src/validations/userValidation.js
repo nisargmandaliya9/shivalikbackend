@@ -212,8 +212,8 @@ exports.getEmployeeLeaveBalance = [
     check('year')
         .not().isEmpty().withMessage('Year is required')
         .isInt().withMessage('Year must be a valid number'),
-    // check('employee_id').optional().isMongoId().withMessage('Must be a valid employee ID'),
-    // check('leave_type_id').optional().isMongoId().withMessage('Must be a valid leave type ID'),
+    check('employee_id').optional().isMongoId().withMessage('Must be a valid employee ID'),
+    check('leave_type_id').optional().isMongoId().withMessage('Must be a valid leave type ID'),
 ];
 
 exports.managerLeaveRequests = [

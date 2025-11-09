@@ -890,20 +890,20 @@ const getEmployeeLeaveBalance = async (req, res) => {
 
     try {
         const { branch_id, department_id, year,
-            // employee_id, 
-            // leave_type_id 
+            employee_id, 
+            leave_type_id 
         } = req.body;
 
         // Build query conditions
         const query = { isDeleted: false };
 
-        // if (employee_id) {
-        //     query.employee_id = employee_id;
-        // }
+        if (employee_id) {
+            query.employee_id = employee_id;
+        }
 
-        // if (leave_type_id) {
-        //     query.leave_type_id = leave_type_id;
-        // }
+        if (leave_type_id) {
+            query.leave_type_id = leave_type_id;
+        }
 
         if (year) {
             query.year = parseInt(year);
@@ -919,14 +919,14 @@ const getEmployeeLeaveBalance = async (req, res) => {
             const userIds = matchingUsers.map(user => user._id);
 
             // Add matching user IDs to the main query
-            // if (employee_id) {
-            //     // If employee_id was specified, it must be in the matching users
-            //     if (!userIds.some(id => id.equals(employee_id))) {
-            //         return res.status(200).send(response.toJson([]));
-            //     }
-            // } else {
+            if (employee_id) {
+                // If employee_id was specified, it must be in the matching users
+                if (!userIds.some(id => id.equals(employee_id))) {
+                    return res.status(200).send(response.toJson([]));
+                }
+            } else {
                 query.employee_id = { $in: userIds };
-            // }
+            }
         }
 
         // Fetch leave balances with populated references
