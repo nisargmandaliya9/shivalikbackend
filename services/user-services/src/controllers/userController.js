@@ -507,15 +507,25 @@ const assignHolidayGroup = async (req, res) => {
         if (!holidayGroup) {
             return res.status(404).send(response.toJson("Holiday Group not found."));
         }
-        const updated = await HolidayGroupAssignmentModel.findByIdAndUpdate(
-            branch_id,
-            { holiday_group_id: holiday_group_id },
-            { new: true }
-        );
-        if (!updated) {
-            return res.status(404).send(response.toJson("Holiday Group Assignment not found."));
+
+        const existingAssignment = await HolidayGroupAssignmentModel.findOne({ branch_id, isDeleted: false });
+        if (existingAssignment) {
+            return res.status(400).send(response.toJson("This branch already has a holiday group assigned."));
         }
-        return res.status(200).send(response.toJson({ message: "Holiday Group assigned to Branch successfully." }));
+        
+        const newAssignment = await HolidayGroupAssignmentModel.create({
+            branch_id,
+            holiday_group_id,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        return res.status(201).send(
+            response.toJson({
+                message: "Holiday Group assigned to Branch successfully.",
+                data: newAssignment
+            })
+        );
     } catch (err) {
         console.error('Error assigning holiday group to branch:', err);
         const statusCode = err.statusCode || 500;
