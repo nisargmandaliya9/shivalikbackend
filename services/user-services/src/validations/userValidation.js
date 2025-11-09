@@ -224,10 +224,12 @@ exports.managerLeaveRequests = [
 ];
 
 exports.approveLeave = [
+    check('id').not().isEmpty().withMessage('ID is required').isMongoId().withMessage('Must be a valid ID'),
     check('request_id').not().isEmpty().withMessage('Request ID is required').isMongoId().withMessage('Must be a valid request ID')
 ];
 
 exports.rejectLeave = [
+    check('id').not().isEmpty().withMessage('ID is required').isMongoId().withMessage('Must be a valid ID'),
     check('request_id').not().isEmpty().withMessage('Request ID is required').isMongoId().withMessage('Must be a valid request ID'),
     check('rejection_reason').not().isEmpty().withMessage('Rejection reason is required').isLength({ min: 3 }).withMessage('Rejection reason must be at least 3 characters')
 ];
