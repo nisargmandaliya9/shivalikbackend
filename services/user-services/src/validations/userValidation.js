@@ -194,6 +194,7 @@ exports.getEmployeeLeaveBalance = [
 ];
 
 exports.managerLeaveRequests = [
+    check('id').not().isEmpty().withMessage('ID is required').isMongoId().withMessage('Must be a valid ID'),
     check('status').optional().isIn(['Pending', 'Approved', 'Rejected']).withMessage('Invalid status filter')
 ];
 

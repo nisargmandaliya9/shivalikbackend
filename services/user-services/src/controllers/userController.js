@@ -927,7 +927,7 @@ const requestLeave = async (req, res) => {
 
     try {
         const { leave_type_id, leave_taken, to_date, from_date, reason } = req.body;
-        const employee_id = req.id; // Get employee ID from JWT token
+        const employee_id = req.body.id;
 
         // Get employee details including manager
         const employee = await UsersModel.findById(employee_id).populate('manager_id');
@@ -1010,7 +1010,7 @@ const getManagerLeaveRequests = async (req, res) => {
     }
 
     try {
-        const manager_id = req.id; // manager's id from auth
+        const manager_id = req.body.id; // manager's id from auth
         const { status } = req.body;
 
         const query = { manager_id, isDeleted: false };
@@ -1037,7 +1037,7 @@ const approveLeave = async (req, res) => {
     }
 
     try {
-        const manager_id = req.id;
+        const manager_id = req.body.id;
         const { request_id } = req.body;
 
         const leaveRequest = await LeaveRequestsModel.findById(request_id);
@@ -1110,7 +1110,7 @@ const rejectLeave = async (req, res) => {
     }
 
     try {
-        const manager_id = req.id;
+        const manager_id = req.body.id;
         const { request_id, rejection_reason } = req.body;
 
         const leaveRequest = await LeaveRequestsModel.findById(request_id);
@@ -1166,7 +1166,7 @@ const getMyLeaveRequests = async (req, res) => {
     }
 
     try {
-        const employee_id = req.id;
+        const employee_id = req.body.id;
         const { status } = req.body;
 
         const query = { employee_id, isDeleted: false };
@@ -1195,7 +1195,7 @@ const getMyLeaveBalances = async (req, res) => {
     }
 
     try {
-        const employee_id = req.id;
+        const employee_id = req.body.id;
         const currentYear = new Date().getFullYear();
 
         const leaveBalances = await EmployeeLeaveBalancesModel.find({
@@ -1222,7 +1222,7 @@ const getMyAvailableLeaves = async (req, res) => {
     }
 
     try {
-        const employee_id = req.id;
+        const employee_id = req.body.id;
         const currentYear = new Date().getFullYear();
         console.log('Fetching available leaves for employee:', employee_id  , 'for year:', currentYear);
         
@@ -1277,7 +1277,7 @@ const getMyAvailableLeaves = async (req, res) => {
 //     }
 
 //     try {
-//         const employee_id = req.id;
+//         const employee_id = req.body.id;
 //         const currentYear = new Date().getFullYear();
 
 //         // Get employee details including department and branch
