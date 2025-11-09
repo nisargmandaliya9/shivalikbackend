@@ -6,6 +6,7 @@ const { isCommonUserAuthenticated, adminVerifyToken, superAdminVerifyToken } = r
 
 router.post("/login", UserValidation.loginApi, UserController.loginApi);
 router.post("/verify-otp", UserValidation.verifyOTP, UserController.verifyOtpAndLogin);
+router.post("/logout", UserValidation.logout, UserController.logout);
 
 router.get("/leavetype-list", [], UserController.getLeaveTypeList);
 router.post("/add-leavetype", UserValidation.addLeaveType, UserController.addLeaveType);
@@ -24,6 +25,9 @@ router.get("/holidaygroup-list", [], UserController.getHolidayGroupList);
 router.post("/add-holidaygroup", UserValidation.addHolidayGroup, UserController.addHolidayGroup);
 router.post("/edit-holidaygroup", UserValidation.editHolidayGroup, UserController.editHolidayGroup);
 router.post("/delete-holidaygroup", UserValidation.deleteHolidayGroup, UserController.deleteHolidayGroup);
+
+router.get("/holidaygroupassignment-list", [], UserController.getHolidayGroupAssignmentList);
+router.post("/assign-holidaygroup", UserValidation.assignHolidayGroup, UserController.assignHolidayGroup);
 
 router.get("/leavegroup-list", [], UserController.getLeaveGroupList);
 router.post("/add-leavegroup", UserValidation.addLeaveGroup, UserController.addLeaveGroup);

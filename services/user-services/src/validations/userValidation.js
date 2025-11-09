@@ -14,6 +14,10 @@ exports.verifyOTP = [
     check('otpcode').not().isEmpty().withMessage('OTP is requied'),
 ];
 
+exports.logout = [
+    check('token').not().isEmpty().withMessage('Token is required'),
+];
+
 exports.addLeaveType = [
     check('name').not().isEmpty().withMessage('Name is requied'),
     check('applyOnHoliday').isBoolean().withMessage('Apply on holiday must be a boolean'),
@@ -58,6 +62,15 @@ exports.editHolidayGroup = [
 
 exports.deleteHolidayGroup = [
     check('id').not().isEmpty().withMessage('ID is required'),
+];
+
+exports.assignHolidayGroup = [
+    check('holiday_group_id')
+        .not().isEmpty().withMessage('Holiday Group ID is required')
+        .isMongoId().withMessage('Must be a valid Holiday Group ID'),
+    check('branch_id')
+        .not().isEmpty().withMessage('Branch ID is required')
+        .isMongoId().withMessage('Must be a valid Branch ID'),
 ];
 
 exports.addLeaveGroup = [

@@ -23,6 +23,7 @@ const LeaveGroupsModel = require('../models/leavegroups.js');
 const LeaveAssignmentsModel = require('../models/leaveassignments.js');
 const EmployeeLeaveBalancesModel = require('../models/employeeleavebalances.js');
 const LeaveRequestsModel = require('../models/leaverequests.js');
+const HolidayGroupAssignmentModel = require("../models/holidaygroupassignments.js");
 const { sendPushNotification } = require('../libs/firebaseNotification.js');
 // const { publishUserUpdate, publishAllUserUpdate } = require('../libs/rabbitmq.js');
 // const { territoryCache } = require("../utils/territoryCache.js");
@@ -146,6 +147,31 @@ const verifyOtpAndLogin = async (req, res) => {
 
     } catch (err) {
         console.log(err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const logout = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+    const { token } = req.body;
+    try {
+        const user = await UsersModel.findOne({ token, isDeleted: false });
+        if (!user) {
+            return res.status(404).send(response.toJson("User not found."));
+        }
+
+        user.token = "";
+        await user.save();
+
+        return res.status(200).send(response.toJson({ message: "Logged out successfully." }));
+
+    } catch (err) {
+        console.error('Error during logout:', err);
         const statusCode = err.statusCode || 500;
         const errMess = err.message || "An internal server error occurred.";
         return res.status(statusCode).send(response.toJson(errMess));
@@ -452,6 +478,49 @@ const deleteHolidayGroup = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: "Error deleting holiday group", error: error.message });
+    }
+}
+
+const getHolidayGroupAssignmentList = async (req, res) => {
+    try {
+        const assignments = await HolidayGroupAssignmentModel.find({})
+        .populate('holiday_group_id', 'name')
+        .populate('branch_id', 'name');
+        return res.status(200).send(response.toJson(assignments));
+    } catch (err) {
+        console.error('Error fetching holiday group assignments:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
+    }
+}
+
+const assignHolidayGroup = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).send(response.toJson(errors.errors[0].msg));
+    }
+    const { holiday_group_id, branch_id } = req.body;
+
+    try {
+        const holidayGroup = await HolidayGroupsModel.findOne({ _id: holiday_group_id, isDeleted: false });
+        if (!holidayGroup) {
+            return res.status(404).send(response.toJson("Holiday Group not found."));
+        }
+        const updated = await HolidayGroupAssignmentModel.findByIdAndUpdate(
+            branch_id,
+            { holiday_group_id: holiday_group_id },
+            { new: true }
+        );
+        if (!updated) {
+            return res.status(404).send(response.toJson("Holiday Group Assignment not found."));
+        }
+        return res.status(200).send(response.toJson({ message: "Holiday Group assigned to Branch successfully." }));
+    } catch (err) {
+        console.error('Error assigning holiday group to branch:', err);
+        const statusCode = err.statusCode || 500;
+        const errMess = err.message || "An internal server error occurred.";
+        return res.status(statusCode).send(response.toJson(errMess));
     }
 }
 
@@ -1381,38 +1450,48 @@ const getMyAvailableLeaves = async (req, res) => {
 module.exports = {
     loginApi,
     verifyOtpAndLogin,
+    logout,
     getDepartmentList,
     getBranchList,
     getEmployeeList,
+
     addEmployee,
     editEmployee,
     deleteEmployee,
+
     getLeaveTypeList,
     addLeaveType,
     editLeaveType,
     deleteLeaveType,
+
     getHolidayList,
     addHoliday,
     editHoliday,
     deleteHoliday,
+
     getHolidayGroupList,
     addHolidayGroup,
     editHolidayGroup,
     deleteHolidayGroup,
+    getHolidayGroupAssignmentList,
+    assignHolidayGroup,
+
     getLeaveGroupList,
     addLeaveGroup,
     editLeaveGroup,
     deleteLeaveGroup,
+
     getLeaveAssignmentList,
     addLeaveAssignment,
     deleteLeaveAssignment,
+
     getEmployeeLeaveBalance,
     requestLeave,
     getManagerLeaveRequests,
     approveLeave,
     rejectLeave,
+
     getMyLeaveRequests,
     getMyLeaveBalances,
     getMyAvailableLeaves,
-    // testUserApi
 }
