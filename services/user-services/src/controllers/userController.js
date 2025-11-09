@@ -203,7 +203,7 @@ const addLeaveType = async (req, res) => {
 
     try {
         // Check if leave type already exists
-        const existingType = await LeaveTypeModel.findOne({ name });
+        const existingType = await LeaveTypeModel.findOne({ name, isDeleted: false });
         if (existingType) {
             return res.status(400).json({ message: "A leave type with this name already exists." });
         }
