@@ -45,11 +45,15 @@ exports.deleteHoliday = [
 
 exports.addHolidayGroup = [
     check('name').not().isEmpty().withMessage('Name is requied'),
-    check('holiday_id').not().isEmpty().withMessage('Holiday ID is required'),
+    check('holiday_id').isArray().withMessage('Holiday IDs must be an array')
+        .notEmpty().withMessage('At least one holiday ID is required'),
+    check('holiday_id.*').isMongoId().withMessage('Each holiday ID must be a valid ID')
 ];
 
 exports.editHolidayGroup = [
     check('id').not().isEmpty().withMessage('ID is required'),
+    check('holiday_id').optional().isArray().withMessage('Holiday IDs must be an array'),
+    check('holiday_id.*').optional().isMongoId().withMessage('Each holiday ID must be a valid ID')
 ];
 
 exports.deleteHolidayGroup = [

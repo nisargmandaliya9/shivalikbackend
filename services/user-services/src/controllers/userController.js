@@ -374,18 +374,20 @@ const addHolidayGroup = async (req, res) => {
     }
 
     try {
-        const existing = await HolidayGroupsModel.findOne({ name: name, holiday_id: holiday_id, isDeleted: false });
+        const existing = await HolidayGroupsModel.findOne({ name: name, isDeleted: false });
         if (existing) {
-            return res.status(400).json({ message: "Holiday already exists for this date." });
+            return res.status(400).json({ message: "Holiday group with this name already exists." });
         }
 
         const newHoliday = new HolidayGroupsModel({
             name,
-            holiday_id,
+            holiday_id
         });
 
         const savedHoliday = await newHoliday.save();
-        res.status(201).json(savedHoliday);
+
+        const populated = await HolidayGroupsModel.findById(savedHoliday._id).populate('holiday_id', 'name date');
+        res.status(201).json(populated);
 
     } catch (error) {
         res.status(500).json({ message: "Error adding holiday", error: error.message });
@@ -398,18 +400,28 @@ const editHolidayGroup = async (req, res) => {
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (holiday_id !== undefined) updateData.holiday_id = holiday_id;
-    if (date !== undefined) updateData.date = date;
 
     if (Object.keys(updateData).length === 0) {
         return res.status(200).json({ message: "No updates provided, success response." });
     }
 
     try {
+        if (name) {
+            const existing = await HolidayGroupsModel.findOne({
+                name,
+                _id: { $ne: id },
+                isDeleted: false
+            });
+            if (existing) {
+                return res.status(400).json({ message: "Holiday group with this name already exists." });
+            }
+        }
+
         const updatedHolidayGroup = await HolidayGroupsModel.findByIdAndUpdate(
             id,
             updateData,
             { new: true, runValidators: true }
-        );
+        ).populate('holiday_id', 'name date');
 
         if (!updatedHolidayGroup) {
             return res.status(404).json({ message: "Holiday Group not found." });

@@ -7,11 +7,12 @@ const holidayGroupsSchema = new Schema({
         type: String,
         required: true
     },
-    holiday_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'holidays',
-        required: true
-    },
+    holiday_id: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'holidays'
+        }
+    ],
     isActive: {
         type: Boolean,
         default: true
