@@ -483,7 +483,7 @@ const deleteHolidayGroup = async (req, res) => {
 
 const getHolidayGroupAssignmentList = async (req, res) => {
     try {
-        const assignments = await HolidayGroupAssignmentModel.find({})
+        const assignments = await HolidayGroupAssignmentModel.find({isDeleted: false})
         .populate('holiday_group_id', 'name')
         .populate('branch_id', 'name');
         return res.status(200).send(response.toJson(assignments));
@@ -543,7 +543,7 @@ const deleteAssignHolidayGroup = async (req, res) => {
     try {
         const updated = await HolidayGroupAssignmentModel.findByIdAndUpdate(
             id,
-            { holiday_group_id: null, isDeleted: true },
+            { isDeleted: true },
             { new: true }
         );
         if (!updated) {
