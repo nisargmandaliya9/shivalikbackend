@@ -1257,19 +1257,19 @@ const rejectLeave = async (req, res) => {
         }
 
         // Notify employee
-        const employee = await UsersModel.findById(leaveRequest.employee_id);
-        if (employee && employee.device_token) {
-            try {
-                await sendPushNotification(
-                    employee.device_token,
-                    'Leave Rejected',
-                    `Your leave request for ${new Date(leaveRequest.from_date).toLocaleDateString()} to ${new Date(leaveRequest.to_date).toLocaleDateString()} was rejected. Reason: ${rejection_reason}`,
-                    { type: 'LEAVE_REJECTED', request_id: leaveRequest._id.toString() }
-                );
-            } catch (pushErr) {
-                console.error('Push notification failed:', pushErr);
-            }
-        }
+        // const employee = await UsersModel.findById(leaveRequest.employee_id);
+        // if (employee && employee.device_token) {
+        //     try {
+        //         await sendPushNotification(
+        //             employee.device_token,
+        //             'Leave Rejected',
+        //             `Your leave request for ${new Date(leaveRequest.from_date).toLocaleDateString()} to ${new Date(leaveRequest.to_date).toLocaleDateString()} was rejected. Reason: ${rejection_reason}`,
+        //             { type: 'LEAVE_REJECTED', request_id: leaveRequest._id.toString() }
+        //         );
+        //     } catch (pushErr) {
+        //         console.error('Push notification failed:', pushErr);
+        //     }
+        // }
 
         const populated = await LeaveRequestsModel.findById(leaveRequest._id)
             .populate('employee_id', 'name email')
